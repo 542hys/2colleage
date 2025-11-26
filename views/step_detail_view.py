@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QLineEdit, QComboBox, QLabel, QScrollArea, QWidget, 
 from models import template_manager
 from models.step_model import (COMBO,
                               BASIC_TYPE_FIELDS, STYPE, DTYPE)
-from PyQt5.QtCore import Qt, QRectF, QPointF, QStandardPaths, pyqtSignal, QEvent
+from PyQt5.QtCore import Qt, QRectF, QPointF, QStandardPaths, pyqtSignal, QEvent, QThread
 from PyQt5.QtGui import QBrush, QColor, QPen, QPainter, QFont, QIcon
 from models.step_model import GLINK_REQUIRED_FIELDS, FIELD_LABELS, FIELD_TYPES
 #注意读取数据详情不要硬编码
@@ -1046,123 +1046,165 @@ class StepDetailView(QGroupBox):
             if step_type in [0, 1]:  # glink_fileds_periodic
                 self.load_periodic_data_from_file(file_path)
     
-    def load_periodic_data_from_file(self, file_path):
-        """读取周期GLINK数据文件，根据数据类型解析每行数据"""
-        import os
-        if not os.path.exists(file_path):
-            QMessageBox.warning(self, "文件不存在", f"文件不存在: {file_path}")
+    # def load_periodic_data_from_file(self, file_path):
+    #     """读取周期GLINK数据文件，根据数据类型解析每行数据"""
+    #     import os
+        
+    #     if not os.path.exists(file_path):
+    #         QMessageBox.warning(self, "文件不存在", f"文件不存在: {file_path}")
+    #         return
+        
+    #     # 获取数据区的数据类型列表
+    #     data_region_widget = self.field_widgets.get("data_region")
+    #     if not data_region_widget:
+    #         QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
+    #         return
+        
+    #     # 从union表格中获取数据类型
+    #     table = data_region_widget.findChild(QTableWidget)
+    #     if not table:
+    #         QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
+    #         return
+        
+    #     data_types = []
+    #     for row in range(table.rowCount()):
+    #         combo = table.cellWidget(row, 1)
+    #         if combo:
+    #             dtype = combo.currentData()
+    #             if dtype is not None:
+    #                 data_types.append(dtype)
+        
+    #     # 如果数据区未配置类型，尝试从第一行推断列数，并提示用户配置
+    #     if not data_types:
+    #         # 仅读取第一行来确定列数
+    #         first_line = None
+    #         try:
+    #             with open(file_path, 'r', encoding='utf-8') as f:
+    #                 for line in f:
+    #                     line = line.strip()
+    #                     if line:
+    #                         first_line = line
+    #                         break
+    #         except Exception as e:
+    #             QMessageBox.critical(self, "读取文件失败", f"读取文件时出错: {str(e)}")
+    #             return
+            
+    #         if first_line:
+    #             col_count = len(first_line.split())
+    #             QMessageBox.information(
+    #                 self,
+    #                 "配置数据类型",
+    #                 f"检测到文件第一行有 {col_count} 列数据。\n请先在数据区配置 {col_count} 个数据类型，然后重新选择文件。"
+    #             )
+    #         else:
+    #             QMessageBox.warning(self, "数据类型未配置", "请先配置数据区的数据类型")
+    #         return
+        
+    #     # 创建后台线程来处理文件读取和解析
+    #     class FileParserThread(QThread):
+    #         parsing_done = pyqtSignal(list, str, int)
+    #         parsing_error = pyqtSignal(str)
+            
+    #         def __init__(self, file_path, data_types):
+    #             super().__init__()
+    #             self.file_path = file_path
+    #             self.data_types = data_types
+            
+    #         def run(self):
+    #             try:
+    #                 parsed_lines = []
+    #                 line_count = 0
+                    
+    #                 # 逐行读取文件，避免一次性加载大文件到内存
+    #                 with open(self.file_path, 'r', encoding='utf-8') as f:
+    #                     for line_idx, line in enumerate(f):
+    #                         line = line.strip()
+    #                         if not line:
+    #                             continue
+                            
+    #                         # 按空格分割
+    #                         values = line.split()
+                            
+    #                         # 检查数据列数是否匹配
+    #                         if len(values) != len(self.data_types):
+    #                             self.parsing_error.emit(
+    #                                 f"第 {line_idx + 1} 行数据列数 ({len(values)}) 与数据类型数量 ({len(self.data_types)}) 不匹配"
+    #                             )
+    #                             return
+                            
+    #                         # 解析每列数据
+    #                         parsed_row = []
+    #                         for col_idx, (value_str, dtype_idx) in enumerate(zip(values, self.data_types)):
+    #                             try:
+    #                                 # 根据数据类型转换值（保留原始字符串）
+    #                                 parsed_row.append({
+    #                                     "data_type": dtype_idx,
+    #                                     "value": value_str  # 保存原始字符串
+    #                                 })
+    #                             except Exception as e:
+    #                                 self.parsing_error.emit(
+    #                                     f"第 {line_idx + 1} 行第 {col_idx + 1} 列数据解析失败: {value_str}, 错误: {e}"
+    #                                 )
+    #                                 return
+                            
+    #                         parsed_lines.append(parsed_row)
+    #                         line_count += 1
+                    
+    #                 self.parsing_done.emit(parsed_lines, self.file_path, line_count)
+    #             except Exception as e:
+    #                 self.parsing_error.emit(f"读取文件时出错: {str(e)}")
+        
+    #     # 确保先清理旧线程
+    #     if hasattr(self, 'parser_thread') and self.parser_thread.isRunning():
+    #         self.parser_thread.quit()
+    #         self.parser_thread.wait()
+    #         del self.parser_thread
+        
+    #     # 创建并启动新线程
+    #     self.parser_thread = FileParserThread(file_path, data_types)
+    #     self.parser_thread.parsing_done.connect(self.on_parsing_done)
+    #     self.parser_thread.parsing_error.connect(self.on_parsing_error)
+    #     self.parser_thread.start()
+    
+    
+    def on_parsing_done(self, parsed_lines, file_path, line_count):
+        """文件解析完成后的处理"""
+        if not parsed_lines:
+            QMessageBox.warning(self, "文件为空", "文件为空，无法读取数据")
             return
         
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-            
-            if not lines:
-                QMessageBox.warning(self, "文件为空", "文件为空，无法读取数据")
-                return
-            
-            # 获取数据区的数据类型列表
-            data_region_widget = self.field_widgets.get("data_region")
-            if not data_region_widget:
-                QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
-                return
-            
-            # 从union表格中获取数据类型
-            table = data_region_widget.findChild(QTableWidget)
-            if not table:
-                QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
-                return
-            
-            data_types = []
-            for row in range(table.rowCount()):
-                combo = table.cellWidget(row, 1)
-                if combo:
-                    dtype = combo.currentData()
-                    if dtype is not None:
-                        data_types.append(dtype)
-            
-            # 如果数据区未配置类型，尝试从第一行推断列数，并提示用户配置
-            if not data_types:
-                # 读取第一行来确定列数
-                first_line = None
-                for line in lines:
-                    line = line.strip()
-                    if line:
-                        first_line = line
-                        break
-                
-                if first_line:
-                    col_count = len(first_line.split())
-                    QMessageBox.information(
-                        self,
-                        "配置数据类型",
-                        f"检测到文件第一行有 {col_count} 列数据。\n请先在数据区配置 {col_count} 个数据类型，然后重新选择文件。"
-                    )
-                else:
-                    QMessageBox.warning(self, "数据类型未配置", "请先配置数据区的数据类型")
-                return
-            
-            # 解析每行数据
-            parsed_lines = []
-            for line_idx, line in enumerate(lines):
-                line = line.strip()
-                if not line:
-                    continue
-                
-                # 按空格分割
-                values = line.split()
-                
-                # 检查数据列数是否匹配
-                if len(values) != len(data_types):
-                    QMessageBox.warning(
-                        self, 
-                        "数据格式错误", 
-                        f"第 {line_idx + 1} 行数据列数 ({len(values)}) 与数据类型数量 ({len(data_types)}) 不匹配"
-                    )
-                    return
-                
-                # 解析每列数据
-                parsed_row = []
-                for col_idx, (value_str, dtype_idx) in enumerate(zip(values, data_types)):
-                    try:
-                        # 根据数据类型转换值（保留原始字符串）
-                        parsed_row.append({
-                            "data_type": dtype_idx,
-                            "value": value_str  # 保存原始字符串
-                        })
-                    except Exception as e:
-                        QMessageBox.warning(
-                            self,
-                            "数据解析错误",
-                            f"第 {line_idx + 1} 行第 {col_idx + 1} 列数据解析失败: {value_str}, 错误: {e}"
-                        )
-                        return
-                
-                parsed_lines.append(parsed_row)
-            
-            # 将解析后的第一行数据填充到数据区表格作为预览
-            if parsed_lines:
-                # 清空现有数据
-                table.setRowCount(0)
-                # 填充数据类型（使用第一行作为结构）
-                first_row = parsed_lines[0]
-                for item in first_row:
-                    self.add_union_row(table, item["data_type"], item["value"])
-                
-                # 保存所有行数据到smodel的expand_step_data中（用于后续展开）
-                self.smodel.expand_step_data["periodic_file_data"] = parsed_lines
-                self.smodel.expand_step_data["periodic_file_path"] = file_path
-                
-                QMessageBox.information(
-                    self,
-                    "文件读取成功",
-                    f"成功读取 {len(parsed_lines)} 行数据。保存时会根据周期展开为多个步骤。"
-                )
-            
-        except Exception as e:
-            QMessageBox.critical(self, "读取文件失败", f"读取文件时出错: {str(e)}")
-            import traceback
-            traceback.print_exc()
+        # 获取数据区表格
+        data_region_widget = self.field_widgets.get("data_region")
+        if not data_region_widget:
+            return
+        
+        table = data_region_widget.findChild(QTableWidget)
+        if not table:
+            return
+        
+        # 将解析后的第一行数据填充到数据区表格作为预览
+        # 清空现有数据
+        table.setRowCount(0)
+        # 填充数据类型（使用第一行作为结构）
+        first_row = parsed_lines[0]
+        for item in first_row:
+            self.add_union_row(table, item["data_type"], item["value"])
+        
+        # 保存所有行数据到smodel的expand_step_data中（用于后续展开）
+        self.smodel.expand_step_data["periodic_file_data"] = parsed_lines
+        self.smodel.expand_step_data["periodic_file_path"] = file_path
+        
+        QMessageBox.information(
+            self,
+            "文件读取成功",
+            f"成功读取 {line_count} 行数据。保存时会根据周期展开为多个步骤。"
+        )
+    
+    def on_parsing_error(self, error_message):
+        """文件解析错误处理"""
+        QMessageBox.critical(self, "文件解析错误", error_message)
+        import traceback
+        traceback.print_exc()
 
     def on_step_save(self):
         # 保存后应当发射刷新list的信号

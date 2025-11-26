@@ -94,6 +94,7 @@ class FileController:
         """保存到指定XML文件"""
         ##目前打开保存后的文件再添加中断或开关量还会有data_region字段
         try:
+            import json  # 确保json模块在函数内部可用
             self.global_controller.update_global_model()
             root = ET.Element("config")
             config_manager = ConfigManager()
@@ -246,7 +247,199 @@ class FileController:
                             step.set_protocol_data({})
                             print("协议类型为'无'，已清空protocol_data（周期步骤）")
                         else:
-                            protocol_data = step.get_protocol_data()
+                            # 设置协议数据
+                            protocol_data = step.get_protocol_data().copy()
+                            
+                            # 检查是否需要计算CRC
+                            ctrl_word_str = protocol_data.get("消息控制字", "0")
+                            try:
+                                if isinstance(ctrl_word_str, str):
+                                    ctrl_word_str = ctrl_word_str.strip().lower().replace('×', 'x').replace('Ｘ', 'x')
+                                    if ctrl_word_str.startswith('0x'):
+                                        ctrl_word = int(ctrl_word_str, 16)
+                                    else:
+                                        ctrl_word = int(ctrl_word_str, 16) if all(c in '0123456789abcdef' for c in ctrl_word_str) else int(float(ctrl_word_str))
+                                else:
+                                    ctrl_word = int(ctrl_word_str)
+                                
+                                # 如果需要计算CRC（位1=1），则重新计算
+                                if (ctrl_word & 0x02) == 0x02:
+                                    # 更新协议时间
+                                    try:
+                                        step_time = first_time + row_idx * period
+                                        time_ms = int(float(step_time) * 1000) & 0xFFFFFFFF
+                                        protocol_data["时间"] = str(time_ms)
+                                    except Exception as e:
+                                        print(f"更新周期步骤协议时间失败: {e}")
+                                    
+                                    # 实现与StepDetailView.calc_glink_fields方法相同的CRC计算逻辑
+                                    try:
+                                        def safe_hex_to_int(s):
+                                            """安全地将十六进制字符串转换为整数"""
+                                            if isinstance(s, (int, float)):
+                                                return int(s)
+                                            s = str(s).strip().lower().replace('×', 'x').replace('Ｘ', 'x')
+                                            if not s:
+                                                return 0
+                                            if s.startswith('0x'):
+                                                return int(s, 16)
+                                            try:
+                                                return int(s, 16) if all(c in '0123456789abcdef' for c in s) else int(float(s))
+                                            except (ValueError, TypeError):
+                                                return 0
+                                        
+                                        # CRC-16/CCITT查表法
+                                        crc_ta = [
+                                            0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
+                                            0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef,
+                                            0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6,
+                                            0x9339, 0x8318, 0xb37b, 0xa35a, 0xd3bd, 0xc39c, 0xf3ff, 0xe3de,
+                                            0x2462, 0x3443, 0x0420, 0x1401, 0x64e6, 0x74c7, 0x44a4, 0x5485,
+                                            0xa56a, 0xb54b, 0x8528, 0x9509, 0xe5ee, 0xf5cf, 0xc5ac, 0xd58d,
+                                            0x3653, 0x2672, 0x1611, 0x0630, 0x76d7, 0x66f6, 0x5695, 0x46b4,
+                                            0xb75b, 0xa77a, 0x9719, 0x8738, 0xf7df, 0xe7fe, 0xd79d, 0xc7bc,
+                                            0x48c4, 0x58e5, 0x6886, 0x78a7, 0x0840, 0x1861, 0x2802, 0x3823,
+                                            0xc9cc, 0xd9ed, 0xe98e, 0xf9af, 0x8948, 0x9969, 0xa90a, 0xb92b,
+                                            0x5af5, 0x4ad4, 0x7ab7, 0x6a96, 0x1a71, 0x0a50, 0x3a33, 0x2a12,
+                                            0xdbfd, 0xcbdc, 0xfbbf, 0xeb9e, 0x9b79, 0x8b58, 0xbb3b, 0xab1a,
+                                            0x6ca6, 0x7c87, 0x4ce4, 0x5cc5, 0x2c22, 0x3c03, 0x0c60, 0x1c41,
+                                            0xedae, 0xfd8f, 0xcdec, 0xddcd, 0xad2a, 0xbd0b, 0x8d68, 0x9d49,
+                                            0x7e97, 0x6eb6, 0x5ed5, 0x4ef4, 0x3e13, 0x2e32, 0x1e51, 0x0e70,
+                                            0xff9f, 0xefbe, 0xdfdd, 0xcffc, 0xbf1b, 0xaf3a, 0x9f59, 0x8f78,
+                                            0x9188, 0x81a9, 0xb1ca, 0xa1eb, 0xd10c, 0xc12d, 0xf14e, 0xe16f,
+                                            0x1080, 0x00a1, 0x30c2, 0x20e3, 0x5004, 0x4025, 0x7046, 0x6067,
+                                            0x83b9, 0x9398, 0xa3fb, 0xb3da, 0xc33d, 0xd31c, 0xe37f, 0xf35e,
+                                            0x02b1, 0x1290, 0x22f3, 0x32d2, 0x4235, 0x5214, 0x6277, 0x7256,
+                                            0x7367, 0x6346, 0x5325, 0x4304, 0x33e3, 0x23c2, 0x13a1, 0x0380,
+                                            0xf26f, 0xe24e, 0xd22d, 0xc20c, 0xb2eb, 0xa2ca, 0x92a9, 0x8288,
+                                            0x7156, 0x6177, 0x5114, 0x4135, 0x31d2, 0x21f3, 0x1190, 0x01b1,
+                                            0xf05e, 0xe07f, 0xd01c, 0xc03d, 0xb0da, 0xa0fb, 0x9098, 0x80b9,
+                                            0x47c5, 0x57e4, 0x6787, 0x77a6, 0x0741, 0x1760, 0x2703, 0x3722,
+                                            0xc6cd, 0xd6ec, 0xe68f, 0xf6ae, 0x8649, 0x9668, 0xa60b, 0xb62a,
+                                            0x45f4, 0x55d5, 0x65b6, 0x7597, 0x0570, 0x1551, 0x2532, 0x3513,
+                                            0xc4fc, 0xd4dd, 0xe4be, 0xf49f, 0x8478, 0x9459, 0xa43a, 0xb41b,
+                                            0x4b63, 0x5b42, 0x6b21, 0x7b00, 0x0be7, 0x1bc6, 0x2ba5, 0x3b84,
+                                            0xca6b, 0xda4a, 0xea29, 0xfa08, 0x8aef, 0x9ace, 0xaaad, 0xba8c,
+                                            0x4952, 0x5973, 0x6910, 0x7931, 0x09d6, 0x19f7, 0x2994, 0x39b5,
+                                            0xc85a, 0xd87b, 0xe818, 0xf839, 0x88de, 0x98ff, 0xa89c, 0xb8bd,
+                                            0x4f21, 0x5f00, 0x6f63, 0x7f42, 0x0fa5, 0x1f84, 0x2fe7, 0x3fc6,
+                                            0xce29, 0xde08, 0xee6b, 0xfe4a, 0x8ead, 0x9e8c, 0xaeef, 0xbece,
+                                            0x4d10, 0x5d31, 0x6d52, 0x7d73, 0x0d94, 0x1db5, 0x2dd6, 0x3df7,
+                                            0xcc18, 0xdc39, 0xec5a, 0xfc7b, 0x8c9c, 0x9cbd, 0xacde, 0xbcff,
+                                        ]
+                                        
+                                        def update_crc_with_value(crc_val, value, byte_count):
+                                            """将值按字节加入CRC计算"""
+                                            for i in range(byte_count):
+                                                byte_val = (value >> (8 * (byte_count - 1 - i))) & 0xFF
+                                                idx = ((crc_val >> 8) ^ byte_val) & 0xFF
+                                                if 0 <= idx < len(crc_ta):
+                                                    crc_val = ((crc_val << 8) ^ crc_ta[idx]) & 0xFFFF
+                                            return crc_val
+                                        
+                                        crc = 0xFFFF
+                                        
+                                        # 1. 仿真时间 (time) - UINT32, 4字节
+                                        try:
+                                            step_time = first_time + row_idx * period
+                                            time_val = int(step_time) & 0xFFFFFFFF
+                                            crc = update_crc_with_value(crc, time_val, 4)
+                                            print(f"周期步骤CRC计算: 仿真时间 = {time_val} (0x{time_val:08X})")
+                                        except Exception as e:
+                                            print(f"周期步骤CRC计算: 获取仿真时间失败: {e}")
+                                        
+                                        # 2. 自身站点号 (local_site) - UINT16
+                                        try:
+                                            # 从原始step的type_data中获取local_site
+                                            local_site_val = 0
+                                            if hasattr(step, "get_type_step_data"):
+                                                local_site_val = safe_hex_to_int(step.get_type_step_data().get("local_site", "0")) & 0xFFFF
+                                            crc = update_crc_with_value(crc, local_site_val, 2)
+                                            print(f"周期步骤CRC计算: 自身站点号 = {local_site_val} (0x{local_site_val:04X})")
+                                        except Exception as e:
+                                            print(f"周期步骤CRC计算: 获取自身站点号失败: {e}")
+                                        
+                                        # 3. 对方站点号 (recip_site) - UINT16
+                                        try:
+                                            # 从原始step的type_data中获取recip_site
+                                            recip_site_val = 0
+                                            if hasattr(step, "get_type_step_data"):
+                                                recip_site_val = safe_hex_to_int(step.get_type_step_data().get("recip_site", "0")) & 0xFFFF
+                                            crc = update_crc_with_value(crc, recip_site_val, 2)
+                                            print(f"周期步骤CRC计算: 对方站点号 = {recip_site_val} (0x{recip_site_val:04X})")
+                                        except Exception as e:
+                                            print(f"周期步骤CRC计算: 获取对方站点号失败: {e}")
+                                        
+                                        # 4. 子地址 (sub_address) - UINT16
+                                        try:
+                                            sub_address = protocol_data.get("子地址", "0")
+                                            sub_address_val = safe_hex_to_int(sub_address) & 0xFFFF
+                                            crc = update_crc_with_value(crc, sub_address_val, 2)
+                                            print(f"周期步骤CRC计算: 子地址 = {sub_address_val} (0x{sub_address_val:04X})")
+                                        except Exception as e:
+                                            print(f"周期步骤CRC计算: 获取子地址失败: {e}")
+                                        
+                                        # 5. GLINK协议时间 - UINT32, 4字节
+                                        try:
+                                            protocol_time_val = int(protocol_data.get("时间", "0")) & 0xFFFFFFFF
+                                            crc = update_crc_with_value(crc, protocol_time_val, 4)
+                                            print(f"周期步骤CRC计算: 协议时间 = {protocol_time_val} (0x{protocol_time_val:08X})")
+                                        except Exception as e:
+                                            print(f"周期步骤CRC计算: 获取协议时间失败: {e}")
+                                        
+                                        # 6. 消息控制字 - UINT16, 2字节
+                                        crc = update_crc_with_value(crc, ctrl_word, 2)
+                                        print(f"周期步骤CRC计算: 消息控制字 = {ctrl_word} (0x{ctrl_word:04X})")
+                                        
+                                        # 7. 消息ID - UINT16, 2字节
+                                        try:
+                                            msg_id_str = protocol_data.get("消息ID", "0")
+                                            msg_id_val = safe_hex_to_int(msg_id_str) & 0xFFFF
+                                            crc = update_crc_with_value(crc, msg_id_val, 2)
+                                            print(f"周期步骤CRC计算: 消息ID = {msg_id_val} (0x{msg_id_val:04X})")
+                                        except Exception as e:
+                                            print(f"周期步骤CRC计算: 获取消息ID失败: {e}")
+                                        
+                                        # 8. 帧计数 - UINT16, 2字节
+                                        try:
+                                            frame_count_str = protocol_data.get("帧计数", "0")
+                                            frame_count = safe_hex_to_int(frame_count_str) & 0xFFFF
+                                            crc = update_crc_with_value(crc, frame_count, 2)
+                                            print(f"周期步骤CRC计算: 帧计数 = {frame_count} (0x{frame_count:04X})")
+                                        except Exception as e:
+                                            print(f"周期步骤CRC计算: 获取帧计数失败: {e}")
+                                        
+                                        # 9. 数据区
+                                        data_value = protocol_data.get("数据区", "")
+                                        if data_value:
+                                            # 处理数据区：可能是空格分隔的16进制字符串
+                                            for word in data_value.split():
+                                                try:
+                                                    w = safe_hex_to_int(word)
+                                                    # 按字节计算CRC
+                                                    # 高字节（高8位）
+                                                    idx = ((crc >> 8) ^ (w >> 8)) & 0xFF
+                                                    if 0 <= idx < len(crc_ta):
+                                                        crc = ((crc << 8) ^ crc_ta[idx]) & 0xFFFF
+                                                    # 低字节（低8位）
+                                                    idx = ((crc >> 8) ^ (w & 0xFF)) & 0xFF
+                                                    if 0 <= idx < len(crc_ta):
+                                                        crc = ((crc << 8) ^ crc_ta[idx]) & 0xFFFF
+                                                except (ValueError, IndexError) as e:
+                                                    print(f"周期步骤CRC计算错误: {e}, word={word}")
+                                                    pass
+                                            print(f"周期步骤CRC计算: 数据区已处理")
+                                        
+                                        # 更新协议数据中的CRC字段
+                                        protocol_data["数据区crc校验和"] = f"0x{crc:04X}"
+                                        print(f"为周期步骤重新计算CRC: 第{row_idx+1}行，时间={first_time + row_idx * period}秒，CRC={protocol_data['数据区crc校验和']}")
+                                    except Exception as e:
+                                        print(f"计算CRC时出错: {e}")
+                                        import traceback
+                                        traceback.print_exc()
+                            except (ValueError, TypeError) as e:
+                                print(f"解析消息控制字失败: {ctrl_word_str}, 错误: {e}")
+                            
                             if protocol_data:
                                 # 检查消息控制字，如果是0x0001或0x0003，添加帧计数属性
                                 ctrl_word_str = protocol_data.get("消息控制字", "0")
@@ -401,6 +594,7 @@ class FileController:
                 f"配置已保存到: {file_path}"
             )
         except Exception as e:
+            import traceback  # 确保traceback模块可用
             print(traceback.format_exc())
             QMessageBox.critical(
                 self.main_window,
