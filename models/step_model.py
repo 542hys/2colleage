@@ -290,7 +290,7 @@ with open(TEMPLATE_PATH, encoding="utf-8") as f:
     template = json.load(f)
 
 class StepModel():
-    PLACEHOLDER_FIELDS = ("time", "period", "local_site", "recip_site", "sub_address", "base_address")
+    PLACEHOLDER_FIELDS = ("time", "period", "local_site", "recip_site", "sub_address", "base_address", "address")
 
     def __init__(self):
         #保留基础流程步字段
@@ -305,7 +305,8 @@ class StepModel():
             "local_site": None,
             "recip_site": None,
             "sub_address": None,
-            "base_address": None
+            "base_address": None,
+            "address": None
         }
         base_field_list = BASIC_TYPE_FIELDS
         type_field_list = get_step_type_field_list(n=self.step_type)
@@ -333,7 +334,7 @@ class StepModel():
             if field in self.placeholder_state and self.placeholder_state[field]:
                 return default
             # 如果是这三个字段且值是字符串，转换为数值
-            if field in ("local_site", "recip_site", "sub_address", "base_address") and isinstance(value, str):
+            if field in ("local_site", "recip_site", "sub_address", "base_address", "address") and isinstance(value, str):
                 return self._parse_string_to_int(value)
             return value
         value = self.type_step_data.get(field, None)
@@ -341,7 +342,7 @@ class StepModel():
             if field in self.placeholder_state and self.placeholder_state[field]:
                 return default
             # 如果是这三个字段且值是字符串，转换为数值
-            if field in ("local_site", "recip_site", "sub_address", "base_address") and isinstance(value, str):
+            if field in ("local_site", "recip_site", "sub_address", "base_address", "address") and isinstance(value, str):
                 return self._parse_string_to_int(value)
             return value
         value = self.expand_step_data.get(field, None)
@@ -367,7 +368,7 @@ class StepModel():
         if field in self.placeholder_state and self.placeholder_state[field]:
             return ""
         # 对于local_site、recip_site、sub_address字段，优先返回原始输入字符串
-        if field in ("local_site", "recip_site", "sub_address", "base_address"):
+        if field in ("local_site", "recip_site", "sub_address", "base_address", "address"):
             raw_input = self.raw_input_strings.get(field)
             if raw_input is not None:
                 return raw_input
@@ -377,7 +378,7 @@ class StepModel():
     
     def set_raw_input_string(self, field, raw_string):
         """设置字段的原始输入字符串（全局保存）"""
-        if field in ("local_site", "recip_site", "sub_address", "base_address"):
+        if field in ("local_site", "recip_site", "sub_address", "base_address", "address"):
             self.placeholder_state[field] = not bool(raw_string)
             self.raw_input_strings[field] = raw_string if raw_string else None
     

@@ -14,6 +14,7 @@
       "local_site": "自身站点号",
       "recip_site": "对方站点号",
       "sub_address": "子地址",
+      "address": "地址",
       "period": "周期",
       "file_path": "文件路径",
       "serialID": "串口号",
@@ -289,6 +290,7 @@
         "protocol_type"
     ],
     "switch_quantity_fileds": [
+        "address",
         "switch_type",
         "switch_value"
     ],
@@ -386,6 +388,7 @@
         "protocol_type"
     ],
     "switch_quantity_fileds": [
+        "address",
         "switch_type",
         "switch_value"
     ],

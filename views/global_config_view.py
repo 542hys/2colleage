@@ -43,6 +43,11 @@ class ConfigManager(QObject):
                 "input_path": "..//..//Platform//DATA//ExDriverInterrupt//input",
                 "output_path": "..//..//Platform//DATA//ExDriverInterrupt//output",
                 "config_path": "..//..//Platform//MARS//Ports//WIN32//port.config"
+            },
+            "switch": {
+                "input_path": "..//..//Platform//DATA//ExDriverSwitch//input",
+                "output_path": "..//..//Platform//DATA//ExDriverSwitch//output",
+                "config_path": "..//..//Platform//Switch//switch.config"
             }
         }
     
@@ -192,7 +197,7 @@ class GlobalConfigView(QGroupBox):
         self.protocol_label = QLabel("协议类型:")
         self.protocol_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.protocol_combo = QComboBox()
-        self.protocol_combo.addItems(["GLink", "串口", "1553-BC", "中断"])
+        self.protocol_combo.addItems(["GLink", "串口", "1553-BC", "中断", "开关量"])
         self.protocol_combo.currentIndexChanged.connect(self.on_protocol_changed)
         
         # 数据输出目录（原输入目录）
@@ -278,7 +283,8 @@ class GlobalConfigView(QGroupBox):
             0: "glink",
             1: "uart",
             2: "bc",
-            3: "interrupt"
+            3: "interrupt",
+            4: "switch"
         }
         return protocol_map.get(self.protocol_combo.currentIndex(), "glink")
     
@@ -305,7 +311,7 @@ class GlobalConfigView(QGroupBox):
         protocol_key = self.get_current_protocol_key()
         protocol_config = self.config_manager.get_protocol_config(protocol_key)
         
-        if protocol_key == "interrupt":
+        if protocol_key == "interrupt" or protocol_key == "switch":
             input_path = self.format_path(protocol_config.get("output_path", ""))
             config_path = ""
         else:
@@ -319,11 +325,11 @@ class GlobalConfigView(QGroupBox):
     
     def update_path_field_visibility(self):
         """根据协议类型显示/隐藏配置路径"""
-        is_interrupt = self.get_current_protocol_key() == "interrupt"
+        is_interrupt_or_switch = self.get_current_protocol_key() in ["interrupt", "switch"]
         if self.config_row_widget:
-            self.config_row_widget.setVisible(not is_interrupt)
+            self.config_row_widget.setVisible(not is_interrupt_or_switch)
         if self.config_label:
-            self.config_label.setVisible(not is_interrupt)
+            self.config_label.setVisible(not is_interrupt_or_switch)
     
     def on_protocol_changed(self):
         """协议选择改变时，加载对应协议的配置"""
@@ -359,7 +365,7 @@ class GlobalConfigView(QGroupBox):
         protocol_key = self.get_current_protocol_key()
         current_cfg = self.config_manager.get_protocol_config(protocol_key)
         protocol_config = dict(current_cfg) if isinstance(current_cfg, dict) else {}
-        if protocol_key == "interrupt":
+        if protocol_key in ["interrupt", "switch"]:
             protocol_config["output_path"] = self.input_edit.text()
             protocol_config.pop("config_path", None)
             protocol_config.pop("input_path", None)
@@ -375,7 +381,7 @@ class GlobalConfigView(QGroupBox):
         data = {
             "output_path": protocol_config.get("output_path", "") if isinstance(protocol_config, dict) else ""
         }
-        if protocol_key == "interrupt":
+        if protocol_key in ["interrupt", "switch"]:
             data["input_path"] = ""
             data["config_path"] = ""
             data["output_path"] = self.input_edit.text()

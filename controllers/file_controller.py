@@ -1233,11 +1233,11 @@ class FileController:
 
         protocol_dirs = {}
         interrupt_output_dir = ""
-        for key in ("glink", "uart", "bc", "interrupt"):
+        for key in ("glink", "uart", "bc", "interrupt", "switch"):
             cfg = config_manager.get_protocol_config(key) or {}
             if key == "interrupt":
                 interrupt_output_dir = resolve_path(cfg.get("output_path", ""))
-            protocol_dirs[key] = resolve_path(cfg.get("input_path", ""))
+            protocol_dirs[key] = resolve_path(cfg.get("output_path", ""))  # 开关量协议使用output_path作为输出目录
 
         def clear_txt_files(target_dir):
             """清空导出目录下的所有txt文件"""
@@ -2092,6 +2092,7 @@ class FileController:
             if get_int(base, 'is_ignore', 0) == 1:
                 return None
 
+            # 获取通用字段
             site_type = get_int(type_data, 'site_type', 0)
             recip = get_int_or_parse_hex(type_data, 'recip_site', 0)
             sub_addr = get_int_or_parse_hex(type_data, 'sub_address', 0)
@@ -2099,7 +2100,33 @@ class FileController:
             data_region = type_data.get('data_region')
             file_path_field = type_data.get('file_path')
             file_hex_sequences = None
+            
+            # 获取开关量协议特定字段
+            address = get_int_or_parse_hex(type_data, 'address', None)
+            switch_type = get_int(type_data, 'switch_type', 8)
+            switch_value = get_int(type_data, 'switch_value', 0)
 
+            # 如果是开关量协议，直接返回基本信息，不需要处理hex数据
+            if stype == 6:  # switch_quantity_fileds
+                payload = {
+                    "step": step,
+                    "base": base,
+                    "type_data": type_data,
+                    "is_non_step": is_non_step,
+                    "is_per_step": is_per_step,
+                    "address": address,
+                    "switch_type": switch_type,
+                    "switch_value": switch_value,
+                    "hex_items": [],
+                    "file_hex_sequences": None,
+                    "actual_byte_len": 0,
+                    "base_time": to_time3(base.get('time', 0.0)),
+                    "period_value": to_time3(type_data.get('period', 0.0)),
+                    "serial_id": 0
+                }
+                return payload
+
+            # 其他协议的处理逻辑
             is_big_endian = base.get('endian', 0) == 0
             hex_items, data_bytes, hex_source, raw_hex_string, hex_segments = normalize_hex_items(
                 data_region,
@@ -2486,8 +2513,64 @@ class FileController:
                 "per_file_pattern": "Uart_Period_recv_Com_ADD_{addr}.txt",
                 "strict_path": True,
                 "mode": "uart"
+            },
+            {
+                "protocol_key": "switch",
+                "display_name": "开关量",
+                "step_types": {"non": {6}, "per": set()},
+                "non_file_pattern": "Switch_NonPeriod_{addr}.txt",
+                "strict_path": True,
+                "mode": "switch"
             }
         ]
+
+        def process_switch_protocol(protocol_name, spec, payloads, out_dir):
+            """处理开关量协议的导出逻辑"""
+            non_pattern = spec.get("non_file_pattern", "Switch_NonPeriod_{addr}.txt")
+            
+            # 按地址分组数据
+            group_non = {}
+            
+            for payload in payloads:
+                address = payload.get("address")
+                if address is None:
+                    print(f"[{protocol_name}] 步骤缺少地址，已跳过: step={payload.get('step')}")
+                    continue
+                
+                addr_str = f"{int(address):02x}"  # 地址转换为两位十六进制字符串
+                
+                if payload["is_non_step"]:
+                    group_non.setdefault(addr_str, []).append((payload["base_time"], payload["hex_items"], payload.get("switch_value", 0), payload.get("switch_type", 8)))
+            
+            print(f"\n[{protocol_name}] 分类结果:")
+            print(f"  非周期地址文件: {len(group_non)} 个")
+            
+            for addr, rows in group_non.items():
+                rows.sort(key=lambda x: x[0])
+                fname = non_pattern.format(addr=addr)
+                fpath = os.path.join(out_dir, fname)
+                try:
+                    with open(fpath, 'w', encoding='utf-8') as f:
+                        for t, hexlist, switch_value, switch_type in rows:
+                            line = f"{t:.3f}"
+                            # 根据switch_type将switch_value转换为对应的十六进制格式
+                            if switch_type == 8:
+                                hex_value = f"{int(switch_value):02x}"  # 8位开关量，2位十六进制
+                            elif switch_type == 16:
+                                hex_value = f"{int(switch_value):04x}"  # 16位开关量，4位十六进制
+                            elif switch_type == 32:
+                                hex_value = f"{int(switch_value):08x}"  # 32位开关量，8位十六进制
+                            else:
+                                hex_value = f"{int(switch_value):x}"  # 默认格式
+                            line += f"\t{hex_value}"
+                            f.write(line + "\n")
+                    print(f"  [{protocol_name}] 写入文件: {fname}")
+                except PermissionError:
+                    print(f"  [{protocol_name}] 权限错误，跳过文件: {fname}")
+                except Exception as exc:
+                    print(f"  [{protocol_name}] 写入文件 {fname} 时出错: {exc}")
+            
+            return out_dir
 
         def process_protocol(spec):
             protocol_name = spec.get("display_name", spec.get("protocol_key", "未知协议"))
@@ -2531,6 +2614,8 @@ class FileController:
             mode = spec.get("mode", "bus").lower()
             if mode == "uart":
                 return process_uart_protocol(protocol_name, spec, payloads, out_dir)
+            elif mode == "switch":
+                return process_switch_protocol(protocol_name, spec, payloads, out_dir)
             return process_bus_protocol(protocol_name, spec, payloads, out_dir)
 
         exported_dirs = []

@@ -1167,12 +1167,81 @@ class StepDetailView(QGroupBox):
     def on_step_save(self):
         # 保存后应当发射刷新list的信号
         try:
-            # 先计算自动字段值（原协议模板的更新功能）
+            # 先计算当前流程步的自动字段值
             self.calculate_auto_fields()
-            # 保存数据
+            # 保存当前流程步数据
             self.step_save_signal.emit()
+            
+            # 更新所有流程步的数据
+            self.update_all_steps_data()
         except Exception as e:
             print(f"保存过程中出错: {e}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "保存错误", f"保存过程中出现错误: {str(e)}")
+    
+    def update_all_steps_data(self):
+        """更新所有流程步的帧计数"""
+        if not self.model or not hasattr(self.model, 'steps'):
+            return
+        
+        print("开始更新所有流程步的帧计数...")
+        
+        # 首先按协议类型对流程步进行分组，并筛选出需要计算帧计数的流程步
+        protocol_groups = {}
+        
+        for step in self.model.steps:
+            step_type = step.get_step_type()
+            protocol_type = step.get_base_step_data().get("protocol_type", 0)
+            
+            if protocol_type == -1:  # 无协议类型
+                continue
+                
+            # 获取消息控制字，判断是否需要计算帧计数
+            protocol_data = step.get_protocol_data() or {}
+            ctrl_word_str = protocol_data.get("消息控制字", "0")
+            ctrl_word = self.safe_hex_to_int(ctrl_word_str)
+            
+            # 只有帧计数位为1时才参与帧计数
+            if (ctrl_word & 0x01) == 0x01:
+                key = (step_type, protocol_type)
+                if key not in protocol_groups:
+                    protocol_groups[key] = []
+                protocol_groups[key].append(step)
+        
+        # 对每个协议组按时间从大到小排序并计算帧计数
+        for (step_type, protocol_type), steps in protocol_groups.items():
+            # 按时间从大到小排序
+            steps.sort(key=lambda x: x.get_value("time", 0), reverse=True)
+            
+            # 计算帧计数
+            for idx, step in enumerate(steps):
+                frame_count = (idx + 1) & 0xFFFF
+                protocol_data = step.get_protocol_data() or {}
+                protocol_data["帧计数"] = f"0x{frame_count:04X}"
+                step.set_protocol_data(protocol_data)
+                print(f"更新协议组({step_type}, {protocol_type})流程步: {step.get_name()}, 时间: {step.get_value('time', 0)}, 帧计数: {frame_count}")
+        
+        # 刷新当前流程步的显示，保持字体一致
+        self.refresh_fields(self.smodel)
+        
+        print("所有流程步帧计数更新完成")
+        
+        # 保持当前视图字体一致性，仅刷新当前流程步的显示
+        self.refresh_fields(self.smodel)
+    
+    def safe_hex_to_int(self, hex_str):
+        """安全地将十六进制字符串转换为整数"""
+        try:
+            if isinstance(hex_str, str):
+                if hex_str.lower().startswith("0x"):
+                    return int(hex_str, 16)
+                return int(hex_str)
+            elif isinstance(hex_str, int):
+                return hex_str
+            return 0
+        except (ValueError, TypeError):
+            return 0
 
     def on_step_cancel(self):
         self.refresh_fields(init=True)
@@ -1559,22 +1628,29 @@ class StepDetailView(QGroupBox):
         if (ctrl_word & 0x01) == 0x01:
             # 获取所有符合条件的流程步（消息控制字为0x0001或0x0003）
             if self.model and hasattr(self.model, 'steps'):
-                # 获取当前流程步的时间
+                # 获取当前流程步的类型和协议类型
+                current_step_type = self.smodel.get_step_type()
+                current_protocol_type = self.smodel.get_base_step_data().get("protocol_type", 0)
                 current_time = self.smodel.get_value("time", 0)
                 
-                # 筛选出所有消息控制字为0x0001或0x0003的流程步
+                # 筛选出所有同协议且消息控制字帧计数位为1的流程步
                 eligible_steps = []
                 for step in self.model.steps:
-                    step_protocol_data = step.get_protocol_data()
-                    if step_protocol_data:
-                        step_ctrl_word_str = step_protocol_data.get("消息控制字", "0")
-                        step_ctrl_word = self.safe_hex_to_int(step_ctrl_word_str)
-                        if (step_ctrl_word & 0x01) == 0x01:  # 位0=1，即0x0001或0x0003
-                            step_time = step.get_value("time", 0)
-                            eligible_steps.append((step_time, step))
+                    step_type = step.get_step_type()
+                    protocol_type = step.get_base_step_data().get("protocol_type", 0)
+                    
+                    # 只处理同协议的流程步
+                    if step_type == current_step_type and protocol_type == current_protocol_type:
+                        step_protocol_data = step.get_protocol_data()
+                        if step_protocol_data:
+                            step_ctrl_word_str = step_protocol_data.get("消息控制字", "0")
+                            step_ctrl_word = self.safe_hex_to_int(step_ctrl_word_str)
+                            if (step_ctrl_word & 0x01) == 0x01:  # 位0=1，即0x0001或0x0003
+                                step_time = step.get_value("time", 0)
+                                eligible_steps.append((step_time, step))
                 
-                # 按时间排序
-                eligible_steps.sort(key=lambda x: x[0])
+                # 按时间从大到小排序
+                eligible_steps.sort(key=lambda x: x[0], reverse=True)
                 
                 # 找到当前流程步在排序后的位置，帧计数为该位置+1
                 current_found = False
@@ -1589,18 +1665,17 @@ class StepDetailView(QGroupBox):
                 if not current_found:
                     # 如果当前流程步不在列表中（可能还未保存），将其加入并重新排序
                     eligible_steps.append((current_time, self.smodel))
-                    eligible_steps.sort(key=lambda x: x[0])
+                    eligible_steps.sort(key=lambda x: x[0], reverse=True)
                     for idx, (step_time, step) in enumerate(eligible_steps):
                         if step is self.smodel:
                             frame_count = (idx + 1) & 0xFFFF
                             print(f"帧计数计算: 当前流程步（未保存）在排序后的位置为 {idx}，帧计数 = {frame_count}")
                             break
             else:
-                # 如果没有model引用，回退到原有逻辑（+1）
+                # 如果没有model引用，回退到原有逻辑
                 frame_count_str = data.get("帧计数", "0")
                 frame_count = self.safe_hex_to_int(frame_count_str)
-                frame_count = (frame_count + 1) & 0xFFFF
-                print(f"帧计数计算: 无model引用，使用原有逻辑，帧计数 = {frame_count}")
+                print(f"帧计数计算: 无model引用，使用当前值，帧计数 = {frame_count}")
         
         # 计算CRC（仅当 ctrl_word 位1=1 时，即0x0002或0x0003）- 使用CRC-16/CCITT算法
         crc = None
@@ -2213,10 +2288,16 @@ class StepDetailView(QGroupBox):
             # 从field_widgets中移除
             del self.field_widgets["protocol_template"]
         
-        # 如果没有模板（协议类型为"无"），清空protocol_data
+        # 如果没有模板（协议类型为"无"），清空protocol_data并删除protocol_table
         if not template:
             self.smodel.set_protocol_data({})
-            print("协议类型为'无'，已清空protocol_data")
+            
+            # 安全地删除protocol_table属性
+            if hasattr(self, 'protocol_table'):
+                del self.protocol_table
+                print("协议类型为'无'，已清空protocol_data并删除protocol_table")
+            else:
+                print("协议类型为'无'，已清空protocol_data")
             return
         
         # 添加新的协议模板区域
@@ -2283,25 +2364,47 @@ class StepDetailView(QGroupBox):
         
         print(f"使用协议模板: {protocol_template.get('name', 'Unknown')}")
         
-        # 从表格中获取数据
-        protocol_data = {}
-        for row in range(self.protocol_table.rowCount()):
-            element_item = self.protocol_table.item(row, 1)
-            if element_item:
-                element = element_item.text()
-                value_widget = self.protocol_table.cellWidget(row, 3)
-                
-                if isinstance(value_widget, QLineEdit) and not value_widget.isReadOnly():
-                    protocol_data[element] = value_widget.text()
-                elif isinstance(value_widget, QComboBox):
-                    dv = value_widget.currentData()
-                    if element == "消息控制字" and isinstance(dv, int):
-                        protocol_data[element] = f"0x{dv:04X}"
+        # 安全地检查protocol_table是否存在且有效
+        if not hasattr(self, 'protocol_table'):
+            print("protocol_table不存在，calculate_auto_fields跳过表格数据读取")
+            return
+        
+        try:
+            # 尝试访问protocol_table来检查它是否仍然有效
+            _ = self.protocol_table.rowCount()
+        except (RuntimeError, AttributeError):
+            # protocol_table已被删除或无效
+            print("protocol_table已被删除或无效，calculate_auto_fields跳过表格数据读取")
+            return
+        
+        if self.protocol_table is None:
+            print("protocol_table为None，calculate_auto_fields跳过表格数据读取")
+            return
+            
+        try:
+            # 从表格中获取数据
+            protocol_data = {}
+            for row in range(self.protocol_table.rowCount()):
+                element_item = self.protocol_table.item(row, 1)
+                if element_item:
+                    element = element_item.text()
+                    value_widget = self.protocol_table.cellWidget(row, 3)
+                    
+                    if isinstance(value_widget, QLineEdit) and not value_widget.isReadOnly():
+                        protocol_data[element] = value_widget.text()
+                    elif isinstance(value_widget, QComboBox):
+                        dv = value_widget.currentData()
+                        if element == "消息控制字" and isinstance(dv, int):
+                            protocol_data[element] = f"0x{dv:04X}"
+                        else:
+                            protocol_data[element] = value_widget.currentText()
                     else:
-                        protocol_data[element] = value_widget.currentText()
-                else:
-                    # 对于只读字段，我们可能需要重新计算
-                    protocol_data[element] = value_widget.text() if isinstance(value_widget, QLabel) else ""
+                        # 对于只读字段，我们可能需要重新计算
+                        protocol_data[element] = value_widget.text() if isinstance(value_widget, QLabel) else ""
+        except (RuntimeError, AttributeError) as e:
+            # 在遍历过程中如果protocol_table被删除或无效，捕获异常
+            print(f"访问protocol_table时出错: {e}，calculate_auto_fields跳过表格数据读取")
+            return
         
         print(f"从表格获取的数据: {protocol_data}")
         

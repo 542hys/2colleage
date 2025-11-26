@@ -21,6 +21,11 @@
             "input_path": "..//..//Platform//DATA//ExDriverInterrupt//input",
             "output_path": "..//..//Platform//DATA//ExDriverInterrupt//output",
             "config_path": "..//..//Platform//MARS//Ports//WIN32//port.config"
+        },
+        "switch": {
+            "input_path": "..//..//Platform//DATA//ExDriverSwitch//input",
+            "output_path": "..//..//Platform//DATA//ExDriverSwitch//output",
+            "config_path": "..//..//Platform//Switch//switch.config"
         }
     }
 }
