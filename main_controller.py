@@ -34,16 +34,24 @@ class MainController:
         # 子控制器
         self.window_controller = WindowController(self.model, self.main_window)
         self.step_detail_controller = StepDetailController(self.model, self.step_detail_view)
+        
+        # 创建全局配置控制器（先不传递step_list_controller）
         self.global_config_controller = GlobalConfigController(
             self.model, self.global_view, self.window_controller
         )
+        
         self.glink_config_controller = GLinkConfigController()
         self.uart_config_controller = UartConfigController()
         self.bc_config_controller = BcConfigController()
+        
+        # 创建步骤列表控制器（传递global_config_controller）
         self.step_list_controller = StepListController(
             self.model, self.step_list_view, 
             self.step_detail_controller, self.global_config_controller, self.STRINGS
         )
+        
+        # 现在设置循环引用：将step_list_controller传递给global_config_controller
+        self.global_config_controller.step_list_controller = self.step_list_controller
         self.file_controller = FileController(
             self.model, self.main_window, 
             global_controller=self.global_config_controller, 

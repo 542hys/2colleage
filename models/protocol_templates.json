@@ -20,8 +20,7 @@
           "dtype": "UINT32",
           "remark": "时间戳",
           "value": "0x00000000",
-          "editable": false,
-          "auto_calc": "timestamp"
+          "editable": true
         },
         {
           "seq": 2,
@@ -40,19 +39,28 @@
         },
         {
           "seq": 4,
+          "element": "数据区长度",
+          "dtype": "UINT16",
+          "remark": "数据区的字节长度",
+          "value": "0x0000",
+          "editable": false,
+          "auto_calc": "data_length"
+        },
+        {
+          "seq": 5,
           "element": "帧计数",
           "dtype": "UINT16",
           "value": "0x0000",
           "editable": false
         },
         {
-          "seq": 5,
+          "seq": 6,
           "element": "数据区",
           "dtype": "UINT16_ARRAY",
           "editable": true
         },
         {
-          "seq": 6,
+          "seq": 7,
           "element": "数据区crc校验和",
           "dtype": "UINT16",
           "value": "0x0000",
@@ -76,8 +84,7 @@
           "element": "时间",
           "dtype": "UINT32",
           "value": "0x00000000",
-          "editable": false,
-          "auto_calc": "timestamp"
+          "editable": true
         },
         {
           "seq": 2,
@@ -117,6 +124,7 @@
         }
       ]
     },
+
     {
       "name": "串口标准帧",
       "id": "serial_std",
@@ -282,7 +290,7 @@
       ]
     },
     {
-      "name": "1553标准模板",
+      "name": "1553典型模板",
       "id": "bus1553_std",
       "protocol_value": 4,
       "step_types": [
@@ -315,19 +323,28 @@
         },
         {
           "seq": 4,
+          "element": "数据区长度",
+          "dtype": "UINT16",
+          "remark": "数据区的字节长度",
+          "value": "0x0000",
+          "editable": false,
+          "auto_calc": "data_length"
+        },
+        {
+          "seq": 5,
           "element": "帧计数",
           "dtype": "UINT16",
           "value": "0x0000",
           "editable": false
         },
         {
-          "seq": 5,
+          "seq": 6,
           "element": "数据区",
           "dtype": "UINT16_ARRAY",
           "editable": true
         },
         {
-          "seq": 6,
+          "seq": 7,
           "element": "数据区crc校验和",
           "dtype": "UINT16",
           "value": "0x0000",

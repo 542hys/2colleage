@@ -1,5 +1,6 @@
 import re
-from typing import Iterable, List, Sequence
+import struct
+from typing import Iterable, List, Sequence, Any, Dict
 
 HEX_TOKEN_SPLIT = re.compile(r"[,\s]+")
 
@@ -194,6 +195,206 @@ def calc_crc_tail_metrics(data_value: str) -> dict:
             "数据区crc校验和": f"0x{crc:04X}",
         },
     }
+
+
+# 支持的数据类型
+SUPPORTED_DTYPES = ["UINT8", "UINT16", "UINT32", "INT8", "INT16", "INT32", "FLOAT32", "FLOAT64"]
+
+# 需要进行16位字交换的小端数据类型
+LITTLE_ENDIAN_WORD_SWAP_DTYPES = {"UINT32", "FLOAT32", "REAL32", "FLOAT64", "REAL64", "DOUBLE"}
+
+
+def to_int(val: Any) -> int:
+    """将值转换为整数，支持十六进制字符串和浮点数"""
+    if val is None:
+        return 0
+    if isinstance(val, int):
+        return val
+    if isinstance(val, float):
+        return int(val)
+    if isinstance(val, str):
+        s_val = val.strip().lower()
+        if s_val.startswith("0x"):
+            try:
+                return int(s_val, 16)
+            except ValueError:
+                pass
+        try:
+            return int(float(s_val))
+        except ValueError:
+            pass
+    return 0
+
+
+def value_to_bytes(val: Any, dtype_str: str, big_endian: bool = True) -> bytes:
+    """将值转换为字节数组，考虑端序"""
+    u = dtype_str.upper()
+    endian_prefix = '>' if big_endian else '<'
+    try:
+        if u in ("UINT8", "INT8"):
+            return bytes([val & 0xFF])
+        elif u in ("UINT16", "INT16"):
+            val = val & 0xFFFF
+            if big_endian:
+                return bytes([val >> 8, val & 0xFF])
+            else:
+                return bytes([val & 0xFF, val >> 8])
+        elif u in ("UINT32", "INT32"):
+            val = val & 0xFFFFFFFF
+            if big_endian:
+                return bytes([val >> 24, (val >> 16) & 0xFF, (val >> 8) & 0xFF, val & 0xFF])
+            else:
+                return bytes([val & 0xFF, (val >> 8) & 0xFF, (val >> 16) & 0xFF, val >> 24])
+        elif u in ("FLOAT32", "REAL32", "FLOAT", "REAL"):
+            if isinstance(val, str):
+                s_val = val.strip().lower()
+                if s_val.startswith("0x"):
+                    try:
+                        bits = int(s_val, 16) & 0xFFFFFFFF
+                        return bits.to_bytes(4, byteorder='big' if big_endian else 'little')
+                    except ValueError:
+                        pass
+            fv = float(val) if val not in (None, "") else 0.0
+            return struct.pack(endian_prefix + 'f', fv)
+        elif u in ("FLOAT64", "REAL64", "DOUBLE"):
+            if isinstance(val, str):
+                s_val = val.strip().lower()
+                if s_val.startswith("0x"):
+                    try:
+                        bits = int(s_val, 16) & 0xFFFFFFFFFFFFFFFF
+                        return bits.to_bytes(8, byteorder='big' if big_endian else 'little')
+                    except ValueError:
+                        pass
+            fv = float(val) if val not in (None, "") else 0.0
+            return struct.pack(endian_prefix + 'd', fv)
+        elif u in ("BOOL", "BOOLEAN"):
+            return bytes([1 if val else 0])
+        else:
+            # 默认按16位处理
+            val = val & 0xFFFF
+            if big_endian:
+                return bytes([val >> 8, val & 0xFF])
+            else:
+                return bytes([val & 0xFF, val >> 8])
+    except Exception:
+        return bytes([0])
+
+
+def swap_16bit_words_for_little_endian(b: bytes) -> bytes:
+    """对小端字节序的16位字进行交换"""
+    if len(b) <= 2:
+        return b
+    result = bytearray()
+    for i in range(0, len(b), 2):
+        if i + 1 < len(b):
+            result.extend([b[i+1], b[i]])
+        else:
+            result.append(b[i])
+    return bytes(result)
+
+
+def calculate_total_bytes(union_list: List[Dict], display_big_endian: bool = True, is_little_endian: bool = False) -> int:
+    """计算数据区的总字节数，与file_controller.py中的逻辑一致"""
+    total_bytes = 0
+    
+    for item in union_list:
+        if not isinstance(item, dict):
+            continue
+            
+        dtype = item.get('data_type')
+        value = item.get('value')
+        
+        # 获取原始数据类型，用于特殊处理字符串
+        original_dtype_str = None
+        if isinstance(dtype, str):
+            original_dtype_str = dtype.strip().upper()
+        
+        # 标记是否为未知数据类型
+        is_unknown_type = False
+        
+        # 获取标准化的数据类型
+        dtype_str = None
+        if isinstance(dtype, int) and 0 <= dtype < len(SUPPORTED_DTYPES):
+            dtype_str = SUPPORTED_DTYPES[dtype]
+        elif isinstance(dtype, str):
+            dtype_str = dtype.strip().upper()
+            # 确保数据类型在SUPPORTED_DTYPES中
+            if dtype_str not in SUPPORTED_DTYPES:
+                # 尝试映射常见的别名
+                type_mappings = {
+                    "INT8": "INT8",
+                    "UINT8": "UINT8",
+                    "INT16": "INT16",
+                    "UINT16": "UINT16",
+                    "INT32": "INT32",
+                    "UINT32": "UINT32",
+                    "FLOAT32": "FLOAT32",
+                    "FLOAT": "FLOAT32",
+                    "REAL32": "FLOAT32",
+                    "REAL": "FLOAT32",
+                    "FLOAT64": "FLOAT64",
+                    "DOUBLE": "FLOAT64",
+                    "REAL64": "FLOAT64",
+                    "BOOL": "UINT8",
+                    "BOOLEAN": "UINT8"
+                }
+                dtype_str = type_mappings.get(dtype_str)
+                if not dtype_str:
+                    is_unknown_type = True
+                    dtype_str = "UINT16"  # 未知类型默认使用16位
+        if not dtype_str:
+            is_unknown_type = True
+            dtype_str = "UINT16"  # 未知类型默认使用16位
+            
+        u = dtype_str.upper()
+        try:
+            # 特殊处理字符串类型
+            if original_dtype_str in ("STR", "STRING"):
+                # 字符串类型使用UTF-8编码的长度
+                val = value if value is not None else ""
+                total_bytes += len(str(val).encode('utf-8'))
+                continue
+                
+            # 根据数据类型选择正确的转换方式
+            if u in ("FLOAT32", "REAL32", "FLOAT", "REAL", "FLOAT64", "REAL64", "DOUBLE"):
+                item_bytes = None
+                if isinstance(value, str):
+                    s_val = value.strip().lower()
+                    if s_val.startswith("0x"):
+                        hex_part = s_val[2:]
+                        expected_bits = 32 if u in ("FLOAT32", "REAL32", "FLOAT", "REAL") else 64
+                        expected_bytes = expected_bits // 8
+                        try:
+                            bits_val = int(hex_part, 16) & ((1 << expected_bits) - 1)
+                            byteorder = 'big' if display_big_endian else 'little'
+                            item_bytes = bits_val.to_bytes(expected_bytes, byteorder=byteorder, signed=False)
+                        except ValueError:
+                            item_bytes = None
+                if item_bytes is None:
+                    try:
+                        converted_value = float(value) if value is not None else 0.0
+                    except (TypeError, ValueError):
+                        converted_value = 0.0
+                    endian_prefix_local = '>' if display_big_endian else '<'
+                    fmt = 'f' if u in ("FLOAT32", "REAL32", "FLOAT", "REAL") else 'd'
+                    item_bytes = struct.pack(endian_prefix_local + fmt, converted_value)
+                    
+            else:
+                # 整数类型使用to_int转换
+                iv = to_int(value)
+                item_bytes = value_to_bytes(iv, dtype_str, display_big_endian)
+                
+            # 处理小端字节序的16位字交换
+            if is_little_endian and u in LITTLE_ENDIAN_WORD_SWAP_DTYPES:
+                item_bytes = swap_16bit_words_for_little_endian(item_bytes)
+                
+            total_bytes += len(item_bytes)
+            
+        except Exception as err:
+            # 处理出错时使用默认值0
+            total_bytes += 1
+    
+    return total_bytes
 
 
 def ensure_hex_prefix(value: str, width: int = 2) -> str:

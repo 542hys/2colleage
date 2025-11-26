@@ -12,9 +12,6 @@ TODOLIST：
 6. 处理各个类型流程配置文件的流程步编辑和数据文件导出，可能涉及协议处理
 '''
 
-import sys
-from PyQt5.QtWidgets import QApplication
-
 def main():
     app = QApplication(sys.argv)
     

@@ -36,6 +36,7 @@ class GlobalConfigController:
         print("全局参数已更新:", self.model.global_params.get("input_path", "get None path"))
         print("now get global view update")
         self.window_controller.update_window_title()
+        self.update_all_steps()
         # self.update_global_view()
 
     
@@ -43,4 +44,25 @@ class GlobalConfigController:
         """从模型更新全局视图"""
         # print("update global view")
         self.global_view.set_data(self.model.global_params)
+
+    def update_all_steps(self):
+        """更新所有流程步的全局配置信息"""
+        if not self.model or not self.model.steps:
+            return
+        
+        # 获取全局配置值
+        global_params = self.model.global_params
+        
+        for step in self.model.steps:
+            # 获取当前流程步的step_type
+            current_step_type = step.get_step_type()
+            # 更新流程步的全局配置值，同时保留原step_type
+            step.update_base_data({
+                'step_type': current_step_type,
+                **global_params
+            })
+        
+        # 刷新当前选中的步骤详情，确保界面显示正确
+        if hasattr(self, 'step_list_controller') and hasattr(self.step_list_controller, 'on_step_selected'):
+            self.step_list_controller.on_step_selected()
 

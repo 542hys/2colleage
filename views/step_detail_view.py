@@ -27,6 +27,7 @@ from utils.protocol_template_utils import (
     calc_serial_extended_metrics,
     calc_serial_standard_metrics,
     normalize_data_region_value,
+    calculate_total_bytes,
 )
 
 
@@ -87,15 +88,12 @@ class StepDetailView(QGroupBox):
         self.btn_row_confirm = QHBoxLayout()
         # 应该两个按钮都连接edit_finish信号？ save连接获取数据信号
         # controller接受到信号后，获取数据并刷新list和detail
-        save_btn = QPushButton("更新全局数据") 
-        cancel_btn = QPushButton("取消")
+        save_btn = QPushButton("保存流程步") 
 
         # 如果连接函数里不用lambda直接加括号会先调用再返回，连接应当在controller里，这里方便快速实现
         save_btn.clicked.connect(self.on_step_save)
-        cancel_btn.clicked.connect(self.on_step_cancel)
 
         self.btn_row_confirm.addWidget(save_btn)
-        self.btn_row_confirm.addWidget(cancel_btn)
         self.layout.addLayout(self.btn_row_confirm)
         
 
@@ -1046,125 +1044,125 @@ class StepDetailView(QGroupBox):
             if step_type in [0, 1]:  # glink_fileds_periodic
                 self.load_periodic_data_from_file(file_path)
     
-    # def load_periodic_data_from_file(self, file_path):
-    #     """读取周期GLINK数据文件，根据数据类型解析每行数据"""
-    #     import os
+    def load_periodic_data_from_file(self, file_path):
+        """读取周期GLINK数据文件，根据数据类型解析每行数据"""
+        import os
         
-    #     if not os.path.exists(file_path):
-    #         QMessageBox.warning(self, "文件不存在", f"文件不存在: {file_path}")
-    #         return
+        if not os.path.exists(file_path):
+            QMessageBox.warning(self, "文件不存在", f"文件不存在: {file_path}")
+            return
         
-    #     # 获取数据区的数据类型列表
-    #     data_region_widget = self.field_widgets.get("data_region")
-    #     if not data_region_widget:
-    #         QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
-    #         return
+        # 获取数据区的数据类型列表
+        data_region_widget = self.field_widgets.get("data_region")
+        if not data_region_widget:
+            QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
+            return
         
-    #     # 从union表格中获取数据类型
-    #     table = data_region_widget.findChild(QTableWidget)
-    #     if not table:
-    #         QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
-    #         return
+        # 从union表格中获取数据类型
+        table = data_region_widget.findChild(QTableWidget)
+        if not table:
+            QMessageBox.warning(self, "数据区未配置", "请先配置数据区的数据类型")
+            return
         
-    #     data_types = []
-    #     for row in range(table.rowCount()):
-    #         combo = table.cellWidget(row, 1)
-    #         if combo:
-    #             dtype = combo.currentData()
-    #             if dtype is not None:
-    #                 data_types.append(dtype)
+        data_types = []
+        for row in range(table.rowCount()):
+            combo = table.cellWidget(row, 1)
+            if combo:
+                dtype = combo.currentData()
+                if dtype is not None:
+                    data_types.append(dtype)
         
-    #     # 如果数据区未配置类型，尝试从第一行推断列数，并提示用户配置
-    #     if not data_types:
-    #         # 仅读取第一行来确定列数
-    #         first_line = None
-    #         try:
-    #             with open(file_path, 'r', encoding='utf-8') as f:
-    #                 for line in f:
-    #                     line = line.strip()
-    #                     if line:
-    #                         first_line = line
-    #                         break
-    #         except Exception as e:
-    #             QMessageBox.critical(self, "读取文件失败", f"读取文件时出错: {str(e)}")
-    #             return
+        # 如果数据区未配置类型，尝试从第一行推断列数，并提示用户配置
+        if not data_types:
+            # 仅读取第一行来确定列数
+            first_line = None
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            first_line = line
+                            break
+            except Exception as e:
+                QMessageBox.critical(self, "读取文件失败", f"读取文件时出错: {str(e)}")
+                return
             
-    #         if first_line:
-    #             col_count = len(first_line.split())
-    #             QMessageBox.information(
-    #                 self,
-    #                 "配置数据类型",
-    #                 f"检测到文件第一行有 {col_count} 列数据。\n请先在数据区配置 {col_count} 个数据类型，然后重新选择文件。"
-    #             )
-    #         else:
-    #             QMessageBox.warning(self, "数据类型未配置", "请先配置数据区的数据类型")
-    #         return
+            if first_line:
+                col_count = len(first_line.split())
+                QMessageBox.information(
+                    self,
+                    "配置数据类型",
+                    f"检测到文件第一行有 {col_count} 列数据。\n请先在数据区配置 {col_count} 个数据类型，然后重新选择文件。"
+                )
+            else:
+                QMessageBox.warning(self, "数据类型未配置", "请先配置数据区的数据类型")
+            return
         
-    #     # 创建后台线程来处理文件读取和解析
-    #     class FileParserThread(QThread):
-    #         parsing_done = pyqtSignal(list, str, int)
-    #         parsing_error = pyqtSignal(str)
+        # 创建后台线程来处理文件读取和解析
+        class FileParserThread(QThread):
+            parsing_done = pyqtSignal(list, str, int)
+            parsing_error = pyqtSignal(str)
             
-    #         def __init__(self, file_path, data_types):
-    #             super().__init__()
-    #             self.file_path = file_path
-    #             self.data_types = data_types
+            def __init__(self, file_path, data_types):
+                super().__init__()
+                self.file_path = file_path
+                self.data_types = data_types
             
-    #         def run(self):
-    #             try:
-    #                 parsed_lines = []
-    #                 line_count = 0
+            def run(self):
+                try:
+                    parsed_lines = []
+                    line_count = 0
                     
-    #                 # 逐行读取文件，避免一次性加载大文件到内存
-    #                 with open(self.file_path, 'r', encoding='utf-8') as f:
-    #                     for line_idx, line in enumerate(f):
-    #                         line = line.strip()
-    #                         if not line:
-    #                             continue
+                    # 逐行读取文件，避免一次性加载大文件到内存
+                    with open(self.file_path, 'r', encoding='utf-8') as f:
+                        for line_idx, line in enumerate(f):
+                            line = line.strip()
+                            if not line:
+                                continue
                             
-    #                         # 按空格分割
-    #                         values = line.split()
+                            # 按空格分割
+                            values = line.split()
                             
-    #                         # 检查数据列数是否匹配
-    #                         if len(values) != len(self.data_types):
-    #                             self.parsing_error.emit(
-    #                                 f"第 {line_idx + 1} 行数据列数 ({len(values)}) 与数据类型数量 ({len(self.data_types)}) 不匹配"
-    #                             )
-    #                             return
+                            # 检查数据列数是否匹配
+                            if len(values) != len(self.data_types):
+                                self.parsing_error.emit(
+                                    f"第 {line_idx + 1} 行数据列数 ({len(values)}) 与数据类型数量 ({len(self.data_types)}) 不匹配"
+                                )
+                                return
                             
-    #                         # 解析每列数据
-    #                         parsed_row = []
-    #                         for col_idx, (value_str, dtype_idx) in enumerate(zip(values, self.data_types)):
-    #                             try:
-    #                                 # 根据数据类型转换值（保留原始字符串）
-    #                                 parsed_row.append({
-    #                                     "data_type": dtype_idx,
-    #                                     "value": value_str  # 保存原始字符串
-    #                                 })
-    #                             except Exception as e:
-    #                                 self.parsing_error.emit(
-    #                                     f"第 {line_idx + 1} 行第 {col_idx + 1} 列数据解析失败: {value_str}, 错误: {e}"
-    #                                 )
-    #                                 return
+                            # 解析每列数据
+                            parsed_row = []
+                            for col_idx, (value_str, dtype_idx) in enumerate(zip(values, self.data_types)):
+                                try:
+                                    # 根据数据类型转换值（保留原始字符串）
+                                    parsed_row.append({
+                                        "data_type": dtype_idx,
+                                        "value": value_str  # 保存原始字符串
+                                    })
+                                except Exception as e:
+                                    self.parsing_error.emit(
+                                        f"第 {line_idx + 1} 行第 {col_idx + 1} 列数据解析失败: {value_str}, 错误: {e}"
+                                    )
+                                    return
                             
-    #                         parsed_lines.append(parsed_row)
-    #                         line_count += 1
+                            parsed_lines.append(parsed_row)
+                            line_count += 1
                     
-    #                 self.parsing_done.emit(parsed_lines, self.file_path, line_count)
-    #             except Exception as e:
-    #                 self.parsing_error.emit(f"读取文件时出错: {str(e)}")
+                    self.parsing_done.emit(parsed_lines, self.file_path, line_count)
+                except Exception as e:
+                    self.parsing_error.emit(f"读取文件时出错: {str(e)}")
         
-    #     # 确保先清理旧线程
-    #     if hasattr(self, 'parser_thread') and self.parser_thread.isRunning():
-    #         self.parser_thread.quit()
-    #         self.parser_thread.wait()
-    #         del self.parser_thread
+        # 确保先清理旧线程
+        if hasattr(self, 'parser_thread') and self.parser_thread.isRunning():
+            self.parser_thread.quit()
+            self.parser_thread.wait()
+            del self.parser_thread
         
-    #     # 创建并启动新线程
-    #     self.parser_thread = FileParserThread(file_path, data_types)
-    #     self.parser_thread.parsing_done.connect(self.on_parsing_done)
-    #     self.parser_thread.parsing_error.connect(self.on_parsing_error)
-    #     self.parser_thread.start()
+        # 创建并启动新线程
+        self.parser_thread = FileParserThread(file_path, data_types)
+        self.parser_thread.parsing_done.connect(self.on_parsing_done)
+        self.parser_thread.parsing_error.connect(self.on_parsing_error)
+        self.parser_thread.start()
     
     
     def on_parsing_done(self, parsed_lines, file_path, line_count):
@@ -1601,6 +1599,8 @@ class StepDetailView(QGroupBox):
             return {}
         
         self.smodel.set_protocol_data(protocol_data)
+        # 计算自动字段，包括数据区长度
+        # self.calculate_auto_fields()
         return protocol_data
 
     def calc_glink_fields(self, data):
@@ -1608,35 +1608,13 @@ class StepDetailView(QGroupBox):
         # 计算数据区长度（字节数）- 优先从union数据计算
         data_len = 0
         
-        # 尝试从union数据计算精确字节数
+        # 尝试从union数据计算精确字节数 - 使用与file_controller.py一致的逻辑
         try:
             if hasattr(self.smodel, 'get_union_data'):
                 union_data = self.smodel.get_union_data()
                 if union_data:
-                    from models.step_model import SUPPORTED_DTYPES
-                    for item in union_data:
-                        if not isinstance(item, dict):
-                            continue
-                        dtype_idx = item.get('data_type')
-                        if isinstance(dtype_idx, int) and 0 <= dtype_idx < len(SUPPORTED_DTYPES):
-                            dtype_str = SUPPORTED_DTYPES[dtype_idx].upper()
-                        else:
-                            dtype_str = str(dtype_idx).upper()
-                        
-                        # 根据数据类型计算字节数
-                        if dtype_str in ("UINT8", "INT8", "BOOL", "BOOLEAN"):
-                            data_len += 1
-                        elif dtype_str in ("UINT16", "INT16"):
-                            data_len += 2
-                        elif dtype_str in ("UINT32", "INT32", "FLOAT32", "REAL32", "FLOAT", "REAL"):
-                            data_len += 4
-                        elif dtype_str in ("FLOAT64", "REAL64", "DOUBLE"):
-                            data_len += 8
-                        elif dtype_str in ("STR", "STRING"):
-                            val = item.get('value', "")
-                            data_len += len(str(val).encode('utf-8'))
-                        else:
-                            data_len += 2  # 默认16位
+                    from utils.protocol_template_utils import calculate_total_bytes
+                    data_len = calculate_total_bytes(union_data)
                     print(f"DEBUG: 从union数据计算字节数: {data_len}")
         except Exception as e:
             print(f"DEBUG: 从union数据计算失败: {e}")
@@ -1660,15 +1638,19 @@ class StepDetailView(QGroupBox):
         
         print(f"DEBUG: 最终字节数: {data_len}")
         
+        # 设置数据区长度字段
+        data["数据区长度"] = f"0x{data_len:04X}"
+        self.update_protocol_field("数据区长度", f"0x{data_len:04X}")
+        
         # 获取通信控制字 - 使用安全转换
         ctrl_word_str = data.get("消息控制字", "0")
         ctrl_word = self.safe_hex_to_int(ctrl_word_str)
         
-        # 计算帧计数（仅当 ctrl_word 位0=1 时，即0x0001或0x0003）
+        # 计算帧计数（仅当 ctrl_word 位1=1 时，即0x0002或0x0003）
         # 需要基于所有符合条件的流程步按时间排序后计算
         frame_count = 0
-        if (ctrl_word & 0x01) == 0x01:
-            # 获取所有符合条件的流程步（消息控制字为0x0001或0x0003）
+        if (ctrl_word & 0x02) == 0x02:
+            # 获取所有符合条件的流程步（消息控制字为0x0002或0x0003）
             if self.model and hasattr(self.model, 'steps'):
                 # 获取当前流程步的类型和协议类型
                 current_step_type = self.smodel.get_step_type()
@@ -1687,7 +1669,7 @@ class StepDetailView(QGroupBox):
                         if step_protocol_data:
                             step_ctrl_word_str = step_protocol_data.get("消息控制字", "0")
                             step_ctrl_word = self.safe_hex_to_int(step_ctrl_word_str)
-                            if (step_ctrl_word & 0x01) == 0x01:  # 位0=1，即0x0001或0x0003
+                            if (step_ctrl_word & 0x02) == 0x02:  # 位1=1，即0x0002或0x0003
                                 step_time = step.get_value("time", 0)
                                 eligible_steps.append((step_time, step))
                 
@@ -1719,9 +1701,9 @@ class StepDetailView(QGroupBox):
                 frame_count = self.safe_hex_to_int(frame_count_str)
                 print(f"帧计数计算: 无model引用，使用当前值，帧计数 = {frame_count}")
         
-        # 计算CRC（仅当 ctrl_word 位1=1 时，即0x0002或0x0003）- 使用CRC-16/CCITT算法
+        # 计算CRC（仅当 ctrl_word 位0=1 时，即0x0001或0x0003）- 使用CRC-16/CCITT算法
         crc = None
-        if (ctrl_word & 0x02) == 0x02:
+        if (ctrl_word & 0x01) == 0x01:
             # CRC-16/CCITT查表法
             # CRC-16/CCITT查表法（CRC余式表，256个元素）
             crc_ta = [
@@ -1871,17 +1853,10 @@ class StepDetailView(QGroupBox):
             
             print(f"CRC计算完成: 最终CRC = 0x{crc:04X}")
         else:
-            # 位1=0（0x0000或0x0001），CRC固定为0
+            # 位0=0（0x0000或0x0002），CRC固定为0
             crc = 0
         
-        # 时间使用用户输入的仿真时间（秒）×1000转换为毫秒
-        try:
-            step_time = self.smodel.get_value("time", 0)
-            # 将秒转换为毫秒（×1000）
-            time_ms = int(float(step_time) * 1000) & 0xFFFFFFFF
-            self.update_protocol_field("时间", str(time_ms))
-        except Exception:
-            pass
+        # 时间字段不再从流程步时间自动更新，保持用户输入的值不变
         
         # 更新表格（消息长度字段已删除，不再更新）
         if (ctrl_word & 0x01) == 0x01:
@@ -1915,19 +1890,19 @@ class StepDetailView(QGroupBox):
         metrics = calc_crc_tail_metrics(data_value)
         self._apply_protocol_overrides(protocol_data, metrics.get("overrides"))
 
-    def update_protocol_time_from_step(self, protocol_data=None):
-        """将当前仿真时间(秒)×1000写入协议“时间”字段"""
-        try:
-            step_time = self.smodel.get_value("time", 0)
-            time_ms = int(float(step_time) * 1000) & 0xFFFFFFFF
-            if protocol_data is not None:
-                protocol_data["时间"] = str(time_ms)
-            self.update_protocol_field("时间", str(time_ms))
-            print(f"同步协议时间字段: {step_time}秒 -> {time_ms}毫秒")
-            return time_ms
-        except Exception as e:
-            print(f"同步协议时间字段失败: {e}")
-            return None
+    # def update_protocol_time_from_step(self, protocol_data=None):
+    #     """将当前仿真时间(秒)×1000写入协议“时间”字段"""
+    #     try:
+    #         step_time = self.smodel.get_value("time", 0)
+    #         time_ms = int(float(step_time) * 1000) & 0xFFFFFFFF
+    #         if protocol_data is not None:
+    #             protocol_data["时间"] = str(time_ms)
+    #         self.update_protocol_field("时间", str(time_ms))
+    #         print(f"同步协议时间字段: {step_time}秒 -> {time_ms}毫秒")
+    #         return time_ms
+    #     except Exception as e:
+    #         print(f"同步协议时间字段失败: {e}")
+    #         return None
 
     def update_protocol_field(self, field_name, value):
         """更新协议模板中的字段值"""
@@ -1954,8 +1929,8 @@ class StepDetailView(QGroupBox):
                     font = widget.font()
                     font.setBold(False)
                     widget.setFont(font)
-                    # "时间"、"帧计数"和"数据区crc校验和"左对齐，与其他字段保持一致
-                    if field_name in ["时间", "帧计数", "数据区crc校验和"]:
+                    # "时间"、"帧计数"、"数据区crc校验和"和"数据区长度"左对齐，与其他字段保持一致
+                    if field_name in ["时间", "帧计数", "数据区crc校验和", "数据区长度"]:
                         widget.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                     else:
                         widget.setAlignment(Qt.AlignCenter)
@@ -2184,17 +2159,25 @@ class StepDetailView(QGroupBox):
                     widget.setStyleSheet("")
                     # 保存当前值作为有效值
                     widget.setProperty("last_valid_value", text)
-                            
+                                    
                     # 根据类型格式化显示
                     if dtype in ("UINT8", "UINT16", "UINT32"):
                         if element == "时间":
-                            widget.setText(str(result))
+                            # 时间字段特殊处理：输入什么显示什么
+                            widget.setText(text)
                         else:
                             widget.setText(f"{result} (0x{result:X})")
                     elif dtype in ("INT8", "INT16", "INT32"):
                         widget.setText(str(result))
                     else:
                         widget.setText(str(result))
+                    
+                    # 实时保存修改后的值到协议数据中
+                    if hasattr(self, 'protocol_table') and element:
+                        protocol_data = self.smodel.get_protocol_data()
+                        protocol_data[element] = widget.text()
+                        self.smodel.set_protocol_data(protocol_data)
+                        print(f"实时保存 {element} 字段值: {widget.text()}")
             except Exception as e:
                 # 转换失败，显示错误
                 field_name = element if element else "该字段"
@@ -2296,8 +2279,8 @@ class StepDetailView(QGroupBox):
                     font = label.font()
                     font.setBold(False)
                     label.setFont(font)
-                    # "时间"、"帧计数"和"数据区crc校验和"左对齐，与其他字段保持一致
-                    if element in ["时间", "帧计数", "数据区crc校验和"]:
+                    # "时间"、"帧计数"、"数据区crc校验和"和"数据区长度"左对齐，与其他字段保持一致
+                    if element in ["时间", "帧计数", "数据区crc校验和", "数据区长度"]:
                         label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                     else:
                         label.setAlignment(Qt.AlignCenter)
@@ -2357,9 +2340,7 @@ class StepDetailView(QGroupBox):
                 self.protocol_table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
                 template_layout.addWidget(self.protocol_table)
                 
-                template_id = template.get("id")
-                if template_id in ("glink_std", "glink_ext"):
-                    self.update_protocol_time_from_step()
+                # 用户首次输入时间后，不再使用流程步时间更新协议时间字段
                 
                 # 更新功能已整合到保存按钮中，移除单独的更新按钮
                 
@@ -2465,8 +2446,8 @@ class StepDetailView(QGroupBox):
         template_id = protocol_template.get("id", "")
         print(f"模板ID: {template_id}")
         
-        if template_id in ("glink_std", "glink_ext"):
-            self.update_protocol_time_from_step(protocol_data)
+        #if template_id in ("glink_std", "glink_ext"):
+            # 不再从流程步自动更新时间字段，保持用户输入的值不变
         
         try:
             if template_id == "serial_std":
@@ -2491,7 +2472,3 @@ class StepDetailView(QGroupBox):
             traceback.print_exc()
         finally:
             self.smodel.set_protocol_data(protocol_data)
-
-
-
-

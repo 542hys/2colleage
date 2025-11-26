@@ -556,8 +556,3 @@ class GlobalConfigView(QGroupBox):
                 errors.append(f"配置文件路径处理失败: {formatted_config} ({exc})")
         
         return errors
-
-
-
-
-

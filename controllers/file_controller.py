@@ -248,7 +248,7 @@ class FileController:
                             print("协议类型为'无'，已清空protocol_data（周期步骤）")
                         else:
                             # 设置协议数据
-                            protocol_data = step.get_protocol_data().copy()
+                            protocol_data = step.get_protocol_data()
                             
                             # 检查是否需要计算CRC
                             ctrl_word_str = protocol_data.get("消息控制字", "0")
@@ -264,13 +264,7 @@ class FileController:
                                 
                                 # 如果需要计算CRC（位1=1），则重新计算
                                 if (ctrl_word & 0x02) == 0x02:
-                                    # 更新协议时间
-                                    try:
-                                        step_time = first_time + row_idx * period
-                                        time_ms = int(float(step_time) * 1000) & 0xFFFFFFFF
-                                        protocol_data["时间"] = str(time_ms)
-                                    except Exception as e:
-                                        print(f"更新周期步骤协议时间失败: {e}")
+                                    # 不再自动更新协议时间，保持用户输入的值不变
                                     
                                     # 实现与StepDetailView.calc_glink_fields方法相同的CRC计算逻辑
                                     try:
@@ -454,8 +448,8 @@ class FileController:
                                     else:
                                         ctrl_word = int(ctrl_word_str)
                                     
-                                    # 如果消息控制字的位0=1（即0x0001或0x0003），添加帧计数属性
-                                    if (ctrl_word & 0x01) == 0x01:
+                                    # 如果消息控制字的位1=1（即0x0002或0x0003），添加帧计数属性
+                                    if (ctrl_word & 0x02) == 0x02:
                                         protocol_elem.set("帧计数", "true")
                                         print(f"保存protocol: 消息控制字为0x{ctrl_word:04X}，添加帧计数属性")
                                 except (ValueError, TypeError) as e:
@@ -545,8 +539,8 @@ class FileController:
                                 else:
                                     ctrl_word = int(ctrl_word_str)
                                 
-                                # 如果消息控制字的位0=1（即0x0001或0x0003），添加帧计数属性
-                                if (ctrl_word & 0x01) == 0x01:
+                                # 如果消息控制字的位1=1（即0x0002或0x0003），添加帧计数属性
+                                if (ctrl_word & 0x02) == 0x02:
                                     protocol_elem.set("帧计数", "true")
                                     print(f"保存protocol: 消息控制字为0x{ctrl_word:04X}，添加帧计数属性")
                             except (ValueError, TypeError) as e:
@@ -912,6 +906,15 @@ class FileController:
     
     def save_config(self):
         """保存配置"""
+        # 先保存当前流程步
+        try:
+            if self.step_detail_controller and hasattr(self.step_detail_controller, 'step_detail_view'):
+                self.step_detail_controller.step_detail_view.on_step_save()
+        except Exception as e:
+            print(f"保存流程步时出错: {e}")
+            import traceback
+            traceback.print_exc()
+        
         if self.model.file_path:
             self.save_to_file(self.model.file_path)
         else:
@@ -921,6 +924,15 @@ class FileController:
         """先保存流程配置，再导出测试数据。
         若当前流程未命名（未保存过），先弹出另存为，用户取消则中止。
         """
+        # 先保存当前流程步
+        try:
+            if self.step_detail_controller and hasattr(self.step_detail_controller, 'step_detail_view'):
+                self.step_detail_controller.step_detail_view.on_step_save()
+        except Exception as e:
+            print(f"保存流程步时出错: {e}")
+            import traceback
+            traceback.print_exc()
+        
         # 确保已保存到文件
         if not self.model.file_path:
             self.save_config_as()
@@ -2512,7 +2524,7 @@ class FileController:
                         key = (payload["recip"], payload["sub_addr"], payload["actual_byte_len"])
                         primary_non.setdefault(key, []).append((t, payload["hex_items"]))
                     else:
-                        desc = f"ID0x{payload['recip']:03X}_SA{payload['sub_addr']:02d}_Len{payload['actual_byte_len']}"
+                        desc = f"ID0x{payload['recip']:03X}_SA{payload['sub_addr']:02X}_Len{payload['actual_byte_len']}"
                         secondary_non_lines.append((t, desc, payload["hex_items"]))
                 else:
                     t = payload["base_time"]
@@ -2523,7 +2535,7 @@ class FileController:
 
             primary_prefix = spec.get("primary_prefix", "Nc")
             secondary_prefix = spec.get("secondary_prefix", "Nt")
-            file_pattern = spec.get("file_pattern", "{prefix}Recv_ID0x{recip:03X}_SA{sa:02d}_Len{ln}.txt")
+            file_pattern = spec.get("file_pattern", "{prefix}Recv_ID0x{recip:03X}_SA{sa:02X}_Len{ln}.txt")
             secondary_non_filename = spec.get("secondary_non_filename") or f"{secondary_prefix}Recv_NonPeriod.txt"
 
             print(f"\n[{protocol_name}] 分类结果:")

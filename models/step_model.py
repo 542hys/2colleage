@@ -325,10 +325,17 @@ class StepModel():
 
 
         
-    def get_value(self, field, default):
+    def get_value(self, field, default=None):
         """获取字段的数值（用于内部处理和导出）
         对于local_site、recip_site、sub_address字段，如果是字符串，会转换为数值
         """
+        # 如果没有提供默认值，则从配置中获取
+        if default is None:
+            default = get_field_default(field)
+            # 如果配置中没有默认值，则使用0作为最后兜底
+            if default is None:
+                default = 0
+        
         value = self.base_step_data.get(field, None)
         if value is not None:
             if field in self.placeholder_state and self.placeholder_state[field]:
@@ -416,6 +423,7 @@ class StepModel():
     
     def set_step_type(self, step_type):
         print(f"set_step_type before {self.step_type} to {step_type}")
+        # 只有在step_type确实改变时才清空type_step_data
         if step_type != self.step_type and step_type is not None:
             self.type_step_data.clear()
         if step_type is not None:

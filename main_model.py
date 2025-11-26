@@ -3,6 +3,7 @@ class DataModel:
     def __init__(self):
         self.global_params = {
         }
+        self.path_setting = {}
         self.steps = []
         self.file_path = None
         self.dirty = False  # 标记数据是否已修改未保存
