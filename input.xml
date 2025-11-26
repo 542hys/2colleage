@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config glink_input_path="..//..//Platform//DATA//ExDriverInterrupt//input" glink_output_path="..//..//Platform//DATA//ExDriverInterrupt//output" uart_input_path="..//..//Platform//DATA//ExDriverUart//input" uart_output_path="..//..//Platform//DATA//ExDriverUart//output" bc_input_path="..//..//Platform//DATA//ExDriverBC//input" bc_output_path="..//..//Platform//DATA//ExDriverBC//output" interrupt_output_path="..//..//Platform//DATA//ExDriverInterrupt//output" output_path="..//..//Platform//DATA//ExDriverInterrupt//output">
+  <path_settings>
+    <protocol name="glink">
+      <input_path>..//..//Platform//DATA//ExDriverInterrupt//input</input_path>
+      <output_path>..//..//Platform//DATA//ExDriverInterrupt//output</output_path>
+    </protocol>
+    <protocol name="uart">
+      <input_path>..//..//Platform//DATA//ExDriverUart//input</input_path>
+      <output_path>..//..//Platform//DATA//ExDriverUart//output</output_path>
+    </protocol>
+    <protocol name="bc">
+      <input_path>..//..//Platform//DATA//ExDriverBC//input</input_path>
+      <output_path>..//..//Platform//DATA//ExDriverBC//output</output_path>
+    </protocol>
+    <protocol name="interrupt">
+      <output_path>..//..//Platform//DATA//ExDriverInterrupt//output</output_path>
+    </protocol>
+  </path_settings>
+  <global_params>
+    <input_path>..//..//Platform//DATA//ExDriverInterrupt//input</input_path>
+    <output_path>..//..//Platform//DATA//ExDriverInterrupt//output</output_path>
+    <config_path>..//..//Platform//MARS//Ports//WIN32//port.config</config_path>
+  </global_params>
+  <steps>
+    <step>
+      <base>
+        <step_type>0</step_type>
+        <name>新流程步</name>
+        <time>1.0</time>
+        <is_ignore>0</is_ignore>
+      </base>
+      <type>
+        <site_type>0</site_type>
+        <local_site>1</local_site>
+        <recip_site>15</recip_site>
+        <sub_address>1</sub_address>
+        <data_region>[]</data_region>
+        <protocol_type>-1</protocol_type>
+      </type>
+      <expand/>
+      <protocol/>
+    </step>
+  </steps>
+</config>

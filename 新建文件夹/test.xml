@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+  <global_params>
+    <input_path>C:/Users/hyski/Desktop/流程配置工具/流程配置代码及上次发送给12所的dist打包/config_demo0728/xml_files</input_path>
+    <output_path>C:/Users/hyski/Desktop/流程配置工具/流程配置代码及上次发送给12所的dist打包/config_demo0728/txt_files</output_path>
+  </global_params>
+  <steps>
+    <step>
+      <base>
+        <step_type>0</step_type>
+        <name>新流程步</name>
+        <time>0.5</time>
+        <is_ignore>0</is_ignore>
+        <endian>0</endian>
+      </base>
+      <type>
+        <site_type>0</site_type>
+        <local_site>56</local_site>
+        <recip_site>54</recip_site>
+        <sub_address>25</sub_address>
+        <msg_len>74</msg_len>
+        <data_region>[{&quot;data_type&quot;: 0, &quot;value&quot;: 16}, {&quot;data_type&quot;: 0, &quot;value&quot;: 0}, {&quot;data_type&quot;: 0, &quot;value&quot;: 0}]</data_region>
+        <protocol_type>0</protocol_type>
+      </type>
+      <expand/>
+    </step>
+    <step>
+      <base>
+        <step_type>0</step_type>
+        <name>新流程步</name>
+        <time>1.0</time>
+        <is_ignore>0</is_ignore>
+        <endian>0</endian>
+      </base>
+      <type>
+        <site_type>0</site_type>
+        <local_site>1</local_site>
+        <recip_site>15</recip_site>
+        <sub_address>1</sub_address>
+        <msg_len>1</msg_len>
+        <data_region>[{&quot;data_type&quot;: 0, &quot;value&quot;: 15}, {&quot;data_type&quot;: 0, &quot;value&quot;: 51}]</data_region>
+        <protocol_type>0</protocol_type>
+      </type>
+      <expand/>
+    </step>
+  </steps>
+</config>

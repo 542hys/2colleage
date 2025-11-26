@@ -1,0 +1,59 @@
+{
+  "dialog": {
+    "window_titles": {
+      "step_config": "流程步配置",
+      "custom_step_config": "流程步配置",
+      "self_edit_step_config": "流程步配置"
+    },
+    "button_text": {
+      "add_field": "添加字段",
+      "delete": "删除"
+    },
+    "field_labels": {
+      "name": "步骤名称",
+      "time": "时间(ms)",
+      "protocol": "协议类型",
+      "data_format": "数据格式",
+      "data_content": "数据内容",
+      "expect": "预期响应",
+      "帧类型": "帧类型",
+      "源地址": "源地址",
+      "目标地址": "目标地址",
+      "调度优先级": "调度优先级"
+    },
+    "field_placeholders": {
+      "name": "步骤的名称或描述",
+      "time": "步骤执行的时间，单位秒",
+      "protocol": "协议类型，默认为glink",
+      "data_format": "数据格式，默认为Hex",
+      "data_content": "数据内容，根据数据格式填写",
+      "expect": "预期响应数据",
+      "帧类型": "1字节，0x01=周期性数据，0x02=非周期性数据，0x03=同步帧，0x04=心跳包",
+      "源地址": "2字节，源节点ID",
+      "目标地址": "2字节，目标节点ID（支持0xFFFF广播）",
+      "调度优先级": "4比特，0-15"
+    },
+    "costom_dialog": {
+      "add_field_title": "添加字段",
+      "add_field_label": "字段名：",
+      "add_field_value_label": "的值：",
+      "missing_required_field": "缺少必需字段",
+      "fill_required_field": "请填写必需字段：{key}\n说明：{desc}\n操作已取消"
+    },
+    "required_fields": [
+      "name", "time", "protocol", "data_format", "data_content", "expect",
+      "帧类型", "源地址", "目标地址", "调度优先级"
+    ]
+  },
+  "step_list_view": {
+    "group_title": "流程步列表",
+    "button_text": {
+      "add": "添加",
+      "edit": "编辑",
+      "remove": "删除",
+      "up": "上移",
+      "down": "下移"
+    },
+    "list_item_format": "{index}. {name} ({protocol}, {time}ms)"
+  }
+}

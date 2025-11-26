@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+  <global_params>
+    <input_path>C:/Users/hyski/Desktop/流程配置工具/流程配置代码及上次发送给12所的dist打包/config_demo0728/xml_files</input_path>
+    <output_path>C:/Users/hyski/Desktop/流程配置工具/流程配置代码及上次发送给12所的dist打包/config_demo0728/txt_files</output_path>
+  </global_params>
+  <steps/>
+</config>

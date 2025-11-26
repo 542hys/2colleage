@@ -1,0 +1,26 @@
+{
+    "input_path": "..//..//Platform//DATA//ExDriverGLink//input",
+    "output_path": "..//..//Platform//DATA//ExDriverGLink//output",
+    "protocols": {
+        "glink": {
+            "input_path": "..//..//Platform//DATA//ExDriverGLink//input",
+            "output_path": "..//..//Platform//DATA//ExDriverGLink//output",
+            "config_path": "..//..//Platform//ExDrivers//GLINK//glink.config"
+        },
+        "uart": {
+            "input_path": "..//..//Platform//DATA//ExDriverUart//input",
+            "output_path": "..//..//Platform//DATA//ExDriverUart//output",
+            "config_path": "..//..//Platform//Uart//uart.config"
+        },
+        "bc": {
+            "input_path": "..//..//Platform//DATA//ExDriverBC//input",
+            "output_path": "..//..//Platform//DATA//ExDriverBC//output",
+            "config_path": "..//..//Platform//BC//bc.config"
+        },
+        "interrupt": {
+            "input_path": "..//..//Platform//DATA//ExDriverInterrupt//input",
+            "output_path": "..//..//Platform//DATA//ExDriverInterrupt//output",
+            "config_path": "..//..//Platform//MARS//Ports//WIN32//port.config"
+        }
+    }
+}

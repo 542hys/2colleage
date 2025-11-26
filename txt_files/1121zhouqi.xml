@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config glink_input_path="..//..//Platform//DATA//ExDriverGLink//input" glink_output_path="..//..//Platform//DATA//ExDriverGLink//output" glink_config_path="..//..//Platform//ExDrivers//GLINK//glink.config" uart_input_path="..//..//Platform//DATA//ExDriverUart//input" uart_output_path="..//..//Platform//DATA//ExDriverUart//output" uart_config_path="..//..//Platform//Uart//uart.config" bc_input_path="..//..//Platform//DATA//ExDriverBC//input" bc_output_path="..//..//Platform//DATA//ExDriverBC//output" bc_config_path="..//..//Platform//BC//bc.config" interrupt_input_path="..//..//Platform//DATA//ExDriverInterrupt//input" interrupt_output_path="..//..//Platform//DATA//ExDriverInterrupt//output" interrupt_config_path="..//..//Platform//MARS//Ports//WIN32//port.config" input_path="..//..//Platform//DATA//ExDriverGLink//input" output_path="..//..//Platform//DATA//ExDriverGLink//output" config_path="..//..//Platform//ExDrivers//GLINK//glink.config">
+  <path_settings>
+    <protocol name="glink">
+      <input_path>..//..//Platform//DATA//ExDriverGLink//input</input_path>
+      <output_path>..//..//Platform//DATA//ExDriverGLink//output</output_path>
+      <config_path>..//..//Platform//ExDrivers//GLINK//glink.config</config_path>
+    </protocol>
+    <protocol name="uart">
+      <input_path>..//..//Platform//DATA//ExDriverUart//input</input_path>
+      <output_path>..//..//Platform//DATA//ExDriverUart//output</output_path>
+      <config_path>..//..//Platform//Uart//uart.config</config_path>
+    </protocol>
+    <protocol name="bc">
+      <input_path>..//..//Platform//DATA//ExDriverBC//input</input_path>
+      <output_path>..//..//Platform//DATA//ExDriverBC//output</output_path>
+      <config_path>..//..//Platform//BC//bc.config</config_path>
+    </protocol>
+    <protocol name="interrupt">
+      <input_path>..//..//Platform//DATA//ExDriverInterrupt//input</input_path>
+      <output_path>..//..//Platform//DATA//ExDriverInterrupt//output</output_path>
+      <config_path>..//..//Platform//MARS//Ports//WIN32//port.config</config_path>
+    </protocol>
+  </path_settings>
+  <global_params>
+    <input_path>..//..//Platform//DATA//ExDriverGLink//input</input_path>
+    <output_path>..//..//Platform//DATA//ExDriverGLink//output</output_path>
+    <config_path>..//..//Platform//ExDrivers//GLINK//glink.config</config_path>
+  </global_params>
+  <steps>
+    <step>
+      <base>
+        <step_type>0</step_type>
+        <name>新流程步</name>
+        <time>1.0</time>
+        <is_ignore>0</is_ignore>
+        <endian>1</endian>
+      </base>
+      <type>
+        <data_region>[{&quot;data_type&quot;: 0, &quot;value&quot;: &quot;1&quot;}, {&quot;data_type&quot;: 0, &quot;value&quot;: &quot;2&quot;}]</data_region>
+      </type>
+      <expand/>
+      <protocol/>
+    </step>
+  </steps>
+</config>

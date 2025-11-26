@@ -1,0 +1,412 @@
+{
+  "fields": {
+    "field_labels": {
+      "step_type": "流程步类型",
+      "name": "流程步名称",
+      "time": "仿真时间(秒)",
+      "stepID": "步骤ID",
+      "is_ignore": "忽略步骤",
+      "endian": "字节序",
+      "msg_len": "消息长度",
+      "data_region": "数据区",
+      "protocol_type": "协议类型",
+      "site_type": "站点类型",
+      "local_site": "自身站点号",
+      "recip_site": "对方站点号",
+      "sub_address": "子地址",
+      "period": "周期",
+      "file_path": "文件路径",
+      "serialID": "串口号",
+      "start_time": "开始时间",
+      "switch_type": "开关数据类型",
+      "switch_value": "开关值",
+      "interrupt_num": "中断号uint",
+      "is_8259": "是否8259中断",
+      "num_8259": "8259号",
+      
+      "glink_fileds_non_periodic": "非周期GLINK",
+      "glink_fileds_periodic": "周期GLINK",
+      "serial_fileds_non_periodic": "非周期串口",
+      "serial_fileds_periodic": "周期串口",
+      "bus1553_fileds_non_periodic": "非周期1553总线",
+      "bus1553_fileds_periodic": "周期1553总线",
+      "switch_quantity_fileds": "开关量",
+      "interrupt_fileds_non_periodic": "非周期中断",
+      "interrupt_fileds_periodic": "周期中断",
+
+      "index": "序号" ,
+
+      "is_ignore_0": "否",
+      "is_ignore_1": "是",
+      "endian_big": "大端序",
+      "endian_little": "小端序",
+      "site_type_0": "NC",
+      "site_type_1": "NT",
+      "is_8259_0": "否",
+      "is_8259_1": "是",
+      "protocol_type_-1": "无",
+      "protocol_type_0": "GLINK典型模板",
+      "protocol_type_1": "GLINK扩展模板",
+      "switch_type_8": "8位",
+      "switch_type_16": "16位",
+      "switch_type_32": "32位",
+
+      "UINT8": "UINT8",
+      "UINT16": "UINT16",
+      "UINT32": "UINT32",
+      "INT8": "INT8",
+      "INT16": "INT16",
+      "INT32": "INT32",
+      "FLOAT32": "FLOAT32",
+      "FLOAT64": "FLOAT64",
+      "STR": "STRING",
+      "BOOL": "BOOL"
+    },
+    "field_data_types": {
+      "step_type": "combo",
+      "name": "str",
+      "time": "double",
+      "stepID": "uint",
+      "is_ignore": "combo",
+      "endian": "combo",
+      "msg_len": "uint",
+      "data_region": "union",
+      "protocol_type": "combo",
+      "site_type": "combo",
+      "local_site": "uint",
+      "recip_site": "uint",
+      "sub_address": "uint",
+      "period": "double",
+      "file_path": "str",
+      "base_address": "uint",
+      "serialID": "uint",
+      "start_time": "double",
+      "switch_type": "combo",
+      "switch_value": "uint",
+      "interrupt_num": "uint",
+      "is_8259": "combo",
+      "num_8259": "uint",
+      "index": "uint" ,
+
+      "uint": "uint",
+      "real32": "real32",
+      "real64": "real64",
+      "str": "str",
+      "bool": "bool",
+
+      "time_uint32": "uint32",
+      "communication_control_word_uint16": "uint16",
+      "msg_id_uint16": "uint16",
+      "data_region_len_uint16": "uint16",
+      "frame_counter_uint16": "uint16",
+      "data_region_uint16": "union_uint16",
+      "crc_uint16": "uint16"
+
+    },
+    "field_defaults": {
+      "step_type": 0,
+      "name": "新流程步",
+      "time": 1.0,
+      "stepID": 1,
+      "is_ignore": 0,
+      "endian": 1,
+      "msg_len": 1,
+      "data_region": null,
+      "protocol_type": -1,
+      "site_type": 0,
+      "local_site": 1,
+      "recip_site": 15,
+      "sub_address": 1,
+      "period": 1,
+      "file_path": "",
+      "base_address": "",
+      "serialID": 1,
+      "start_time": 1,
+      "switch_type": 8,
+      "switch_value": 0,
+      "interrupt_num": 0,
+      "is_8259": 0,
+      "num_8259": 1,
+
+      "uint": 0,
+      "real32": 0,
+      "real64": 0,
+      "str": "",
+      "bool": false,
+
+      "UINT8": 0,
+      "UINT16": 0,
+      "UINT32": 0,
+      "INT8": 0,
+      "INT16": 0,
+      "INT32": 0,
+      "FLOAT32": 0,
+      "FLOAT64": 0
+
+    },
+    "field_desc": {
+      "step_type": "流程步类型",
+      "name": "流程步名称",
+      "time": "仿真时间(秒): double",
+      "stepID": "步骤ID",
+      "is_ignore": "忽略步骤: 0-否;1-是",
+      "endian": "字节序: 0-大端序;1-小端序",
+      "msg_len": "消息长度",
+      "data_region": "数据区",
+      "protocol_type": "协议类型: 0-GLINK典型模板;1-GLINK扩展模板",
+      "site_type": "站点类型: 0-nc;1-nt",
+      "local_site": "自身站点号: uint",
+      "recip_site": "对方站点号: uint",
+      "sub_address": "子地址: uint",
+      "period": "周期: double",
+      "file_path": "文件路径",
+      "base_address": "基地址",
+      "start_time": "开始时间: double",
+      "serialID": "串口号",
+      "switch_type": "开关数据类型8/16/32位",
+      "switch_value": "开关值",
+      "interrupt_num": "中断号: uint",
+      "is_8259": "是否8259中断: 0-否;1-是",
+      "num_8259": "8259号",
+
+      "uint": "无符号整型",
+      "real32": "单精度浮点数",
+      "real64": "双精度浮点数",
+      "str": "字符串",
+      "bool": "布尔型: false:非;true:真"
+
+    },
+    "combo_options": {
+        "data_type":[
+            {"value": 0, "label": "UINT8"},
+            {"value": 1, "label": "UINT16"},
+            {"value": 2, "label": "UINT32"},
+            {"value": 3, "label": "INT8"},
+            {"value": 4, "label": "INT16"},
+            {"value": 5, "label": "INT32"},
+            {"value": 6, "label": "FLOAT32"},
+            {"value": 7, "label": "FLOAT64"},
+            {"value": 8, "label": "STR"},
+            {"value": 9, "label": "BOOL"}
+        ],
+        "step_type": [
+            {"value": 0, "label": "glink_fileds_non_periodic"},
+            {"value": 1, "label": "glink_fileds_periodic"},
+            {"value": 2, "label": "serial_fileds_non_periodic"},
+            {"value": 3, "label": "serial_fileds_periodic"},
+            {"value": 4, "label": "bus1553_fileds_non_periodic"},
+            {"value": 5, "label": "bus1553_fileds_periodic"},
+            {"value": 6, "label": "switch_quantity_fileds"},
+            {"value": 7, "label": "interrupt_fileds_non_periodic"},
+            {"value": 8, "label": "interrupt_fileds_periodic"}
+        ],
+        "is_ignore": [
+            {"value": 0, "label": "is_ignore_0"},
+            {"value": 1, "label": "is_ignore_1"}
+        ],
+        "endian": [
+            {"value": 0, "label": "endian_big"},
+            {"value": 1, "label": "endian_little"}
+        ],
+        "site_type": [
+            {"value": 0, "label": "site_type_0"},
+            {"value": 1, "label": "site_type_1"}
+        ],
+        "switch_type": [
+            {"value": 8, "label": "switch_type_8"},
+            {"value": 16, "label": "switch_type_16"},
+            {"value": 32, "label": "switch_type_32"}
+        ],
+        "is_8259": [
+            {"value": 0, "label": "is_8259_0"},
+            {"value": 1, "label": "is_8259_1"}
+        ],
+        "protocol_type": [
+            {"value": -1, "label": "protocol_type_-1"},
+            {"value": 0, "label": "protocol_type_0"}
+        ]
+    }
+  },
+  "step_types":{
+    "basic_fileds":["step_type", "name", "time", "is_ignore", "endian"],
+    "support_data_types":["UINT8","UINT16","UINT32","INT8","INT16","INT32","FLOAT32","FLOAT64","STR","BOOL"],
+    "union":["UINT8","UINT16","UINT32","INT8","INT16","INT32","FLOAT32","FLOAT64","STR","BOOL"],
+    "union_uint16":["uint16"],
+    "support_types": [
+      "glink_fileds_non_periodic","glink_fileds_periodic", 
+      "serial_fileds_non_periodic", "serial_fileds_periodic", 
+      "bus1553_fileds_non_periodic", "bus1553_fileds_periodic",
+      "switch_quantity_fileds", "interrupt_fileds_non_periodic", "interrupt_fileds_periodic"
+    ],
+    "glink_fileds_non_periodic": [
+        "site_type",
+        "local_site",
+        "recip_site",
+        "sub_address",
+        "data_region",
+        "protocol_type"
+    ],
+    "glink_fileds_periodic": [
+        "site_type",
+        "local_site",
+        "recip_site",
+        "sub_address",
+        "period",
+        "data_region",
+        "file_path",
+        "protocol_type"
+    ],
+      "serial_fileds_non_periodic": [
+        "serialID",
+        "msg_len",
+        "data_region",
+        "protocol_type"
+    ],
+    "serial_fileds_periodic": [
+        "serialID",
+        "start_time",
+        "period",
+        "msg_len",
+        "file_path",
+        "protocol_type"
+    ],
+    "bus1553_fileds_non_periodic": [
+        "site_type",
+        "local_site",
+        "recip_site",
+        "sub_address",
+        "data_region",
+        "protocol_type"
+    ],
+    "bus1553_fileds_periodic": [
+        "site_type",
+        "local_site",
+        "recip_site",
+        "sub_address",
+        "start_time",
+        "period",
+        "file_path",
+        "protocol_type"
+    ],
+    "switch_quantity_fileds": [
+        "switch_type",
+        "switch_value"
+    ],
+    "interrupt_fileds_non_periodic": [
+        "interrupt_num",
+        "is_8259",
+        "num_8259"
+    ],
+    "interrupt_fileds_periodic": [
+        "interrupt_num",
+        "period",
+        "is_8259",
+        "num_8259"
+    ]
+  },
+  "protocol_frames":{
+      "support_types": [
+      "glink_fileds_non_periodic","glink_fileds_periodic", 
+      "serial_fileds_non_periodic", "serial_fileds_periodic", 
+      "bus1553_fileds_non_periodic", "bus1553_fileds_periodic",
+      "switch_quantity_fileds", "interrupt_fileds_non_periodic", "interrupt_fileds_periodic"
+    ],
+    "glink_fileds_non_periodic": [
+        [
+            "time_uint32",
+            "communication_control_word_uint16",
+            "msg_id_uint16",
+            "data_region_len_uint16",
+            "frame_counter_uint16",
+            "data_region_uint16",
+            "crc_uint16"
+        ],
+        []
+    ],
+    "glink_fileds_periodic": [
+        [
+            "time",
+            "communication_control_wor",
+            "msg_id",
+            ""
+        ],
+        []
+    ],
+    "serial_fileds_non_periodic": [
+        "serialID",
+        "start_time",
+        "period",
+        "msg_len",
+        "data_region",
+        "protocol_type"
+    ],
+    "serial_fileds_periodic": [
+        [
+            "seTypicalhead1",
+            "seTypicalhead2",
+            "data_region",
+            "PAD0",
+            "data_region_len",
+            "seTypicalend1",
+            "seTypicalend2"
+        ],
+        [
+            "seExpandhead1",
+            "seExpandlhead2",
+            "data_region",
+            "PAD_len",
+            "crc_upper",
+            "crc_lower",
+            "data_region_len_upper",
+            "data_region_len_lower",
+            "seExpandPAD",
+            "seExpandend1",
+            "seExpandend2"
+        ]
+    ],
+    "bus1553_fileds_non_periodic": [
+        "site_type",
+        "local_site",
+        "recip_site",
+        "sub_address",
+        "msg_len",
+        "data_region",
+        "protocol_type"
+    ],
+    "bus1553_fileds_periodic": [
+        "site_type",
+        "local_site",
+        "recip_site",
+        "sub_address",
+        "start_time",
+        "period",
+        "msg_len",
+        "file_path",
+        "data_region",
+        "protocol_type"
+    ],
+    "switch_quantity_fileds": [
+        "switch_type",
+        "switch_value"
+    ],
+    "interrupt_fileds_non_periodic": [
+        "interrupt_num",
+        "is_8259",
+        "num_8259"
+    ],
+    "interrupt_fileds_periodic": [
+        "interrupt_num",
+        "period",
+        "file_path",
+        "is_8259",
+        "num_8259"
+    ]
+    
+  },
+  "views_config":{
+      "table_columns":["index", "name", "step_type", "time"]
+  } 
+}
+
+
+

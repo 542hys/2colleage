@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+  <global_params>
+    <input_path>..//..//Platform//DATA//ExDriverGLink//input</input_path>
+    <output_path>..//..//Platform//DATA//ExDriverGLink//output</output_path>
+    <config_path>..//..//Platform//ExDrivers//GLINK//glink.config</config_path>
+  </global_params>
+  <steps>
+    <step>
+      <base>
+        <step_type>0</step_type>
+        <name>新流程步</name>
+        <time>1.0</time>
+        <is_ignore>0</is_ignore>
+        <endian>1</endian>
+      </base>
+      <type>
+        <site_type>0</site_type>
+        <local_site/>
+        <recip_site/>
+        <sub_address/>
+        <data_region>[{&quot;data_type&quot;: 0, &quot;value&quot;: &quot;0&quot;}]</data_region>
+        <protocol_type>0</protocol_type>
+      </type>
+      <expand/>
+      <protocol 帧计数="true">
+        <时间>1.0</时间>
+        <消息控制字>0x0003</消息控制字>
+        <消息ID>0x0000</消息ID>
+        <帧计数>1</帧计数>
+        <数据区/>
+        <数据区crc校验和>0x7BEC</数据区crc校验和>
+      </protocol>
+    </step>
+  </steps>
+</config>

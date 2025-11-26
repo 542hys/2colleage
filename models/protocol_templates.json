@@ -1,0 +1,449 @@
+{
+  "none_option": {
+    "value": -1,
+    "label": "无"
+  },
+  "templates": [
+    {
+      "name": "GLINK典型模板",
+      "id": "glink_std",
+      "protocol_value": 0,
+      "step_types": [
+        "glink_fileds_non_periodic",
+        "glink_fileds_periodic"
+      ],
+      "merge_8bit_to_16bit": true,
+      "fields": [
+        {
+          "seq": 1,
+          "element": "时间",
+          "dtype": "UINT32",
+          "remark": "时间戳",
+          "value": "0x00000000",
+          "editable": false,
+          "auto_calc": "timestamp"
+        },
+        {
+          "seq": 2,
+          "element": "消息控制字",
+          "dtype": "UINT16",
+          "remark": "0-不计算CRC和帧序号;1-计算CRC;2-计算帧序号;3-计算CRC和帧序号",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 3,
+          "element": "消息ID",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 4,
+          "element": "帧计数",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false
+        },
+        {
+          "seq": 5,
+          "element": "数据区",
+          "dtype": "UINT16_ARRAY",
+          "editable": true
+        },
+        {
+          "seq": 6,
+          "element": "数据区crc校验和",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false,
+          "auto_calc": "crc"
+        }
+      ]
+    },
+    {
+      "name": "GLINK扩展模板",
+      "id": "glink_ext",
+      "protocol_value": 1,
+      "step_types": [
+        "glink_fileds_non_periodic",
+        "glink_fileds_periodic"
+      ],
+      "merge_8bit_to_16bit": true,
+      "fields": [
+        {
+          "seq": 1,
+          "element": "时间",
+          "dtype": "UINT32",
+          "value": "0x00000000",
+          "editable": false,
+          "auto_calc": "timestamp"
+        },
+        {
+          "seq": 2,
+          "element": "消息控制字",
+          "dtype": "UINT16",
+          "remark": "0-不计算CRC和帧序号;1-计算CRC;2-计算帧序号;3-计算CRC和帧序号",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 3,
+          "element": "消息ID",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 4,
+          "element": "帧计数",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false
+        },
+        {
+          "seq": 5,
+          "element": "数据区",
+          "dtype": "UINT16_ARRAY",
+          "editable": true
+        },
+        {
+          "seq": 6,
+          "element": "数据区crc校验和",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false,
+          "auto_calc": "crc"
+        }
+      ]
+    },
+    {
+      "name": "串口标准帧",
+      "id": "serial_std",
+      "protocol_value": 2,
+      "step_types": [
+        "serial_fileds_non_periodic",
+        "serial_fileds_periodic"
+      ],
+      "merge_8bit_to_16bit": false,
+      "fields": [
+        {
+          "seq": 1,
+          "element": "帧头1",
+          "dtype": "UINT8",
+          "value": "0x5A",
+          "editable": false
+        },
+        {
+          "seq": 2,
+          "element": "帧头2",
+          "dtype": "UINT8",
+          "value": "0x54",
+          "editable": false
+        },
+        {
+          "seq": 3,
+          "element": "数据区",
+          "dtype": "UINT8_ARRAY",
+          "editable": true
+        },
+        {
+          "seq": 4,
+          "element": "填充字节",
+          "dtype": "UINT8",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 5,
+          "element": "数据区累加和",
+          "dtype": "UINT8",
+          "remark": "超过0xFF时取低8位",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 6,
+          "element": "数据区长度",
+          "dtype": "UINT8",
+          "remark": "单位：字节",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 7,
+          "element": "帧尾1",
+          "dtype": "UINT8",
+          "value": "0x5A",
+          "editable": false
+        },
+        {
+          "seq": 8,
+          "element": "帧尾2",
+          "dtype": "UINT8",
+          "value": "0xFE",
+          "editable": false
+        }
+      ]
+    },
+    {
+      "name": "串口扩展帧",
+      "id": "serial_ext",
+      "protocol_value": 3,
+      "step_types": [
+        "serial_fileds_non_periodic",
+        "serial_fileds_periodic"
+      ],
+      "merge_8bit_to_16bit": false,
+      "fields": [
+        {
+          "seq": 1,
+          "element": "帧头1",
+          "dtype": "UINT8",
+          "value": "0x5A",
+          "editable": false
+        },
+        {
+          "seq": 2,
+          "element": "帧头2",
+          "dtype": "UINT8",
+          "value": "0x54",
+          "editable": false
+        },
+        {
+          "seq": 3,
+          "element": "数据区",
+          "dtype": "UINT8_ARRAY",
+          "editable": true
+        },
+        {
+          "seq": 4,
+          "element": "填充字节1",
+          "dtype": "UINT8",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 5,
+          "element": "数据区crc校验和低8位",
+          "dtype": "UINT8",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 6,
+          "element": "数据区crc校验和高8位",
+          "dtype": "UINT8",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 7,
+          "element": "填充字节2",
+          "dtype": "UINT8",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 8,
+          "element": "数据区长度低8位",
+          "dtype": "UINT8",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 9,
+          "element": "数据区长度高8位",
+          "dtype": "UINT8",
+          "value": "0x00",
+          "editable": false
+        },
+        {
+          "seq": 10,
+          "element": "填充字节3",
+          "dtype": "UINT8",
+          "value": "0xAA",
+          "editable": false
+        },
+        {
+          "seq": 11,
+          "element": "帧尾1",
+          "dtype": "UINT8",
+          "value": "0x5A",
+          "editable": false
+        },
+        {
+          "seq": 12,
+          "element": "帧尾2",
+          "dtype": "UINT8",
+          "value": "0xFE",
+          "editable": false
+        }
+      ]
+    },
+    {
+      "name": "1553标准模板",
+      "id": "bus1553_std",
+      "protocol_value": 4,
+      "step_types": [
+        "bus1553_fileds_non_periodic",
+        "bus1553_fileds_periodic"
+      ],
+      "merge_8bit_to_16bit": true,
+      "fields": [
+        {
+          "seq": 1,
+          "element": "时间",
+          "dtype": "UINT32",
+          "value": "0x00000000",
+          "editable": false,
+          "auto_calc": "timestamp"
+        },
+        {
+          "seq": 2,
+          "element": "消息控制字",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 3,
+          "element": "消息ID",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 4,
+          "element": "帧计数",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false
+        },
+        {
+          "seq": 5,
+          "element": "数据区",
+          "dtype": "UINT16_ARRAY",
+          "editable": true
+        },
+        {
+          "seq": 6,
+          "element": "数据区crc校验和",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false,
+          "auto_calc": "crc"
+        }
+      ]
+    },
+    {
+      "name": "1553扩展模板",
+      "id": "bus1553_ext",
+      "protocol_value": 5,
+      "step_types": [
+        "bus1553_fileds_non_periodic",
+        "bus1553_fileds_periodic"
+      ],
+      "merge_8bit_to_16bit": true,
+      "fields": [
+        {
+          "seq": 1,
+          "element": "时间",
+          "dtype": "UINT32",
+          "value": "0x00000000",
+          "editable": false,
+          "auto_calc": "timestamp"
+        },
+        {
+          "seq": 2,
+          "element": "消息控制字",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 3,
+          "element": "消息ID",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": true
+        },
+        {
+          "seq": 4,
+          "element": "帧计数",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false
+        },
+        {
+          "seq": 5,
+          "element": "数据区",
+          "dtype": "UINT16_ARRAY",
+          "editable": true
+        },
+        {
+          "seq": 6,
+          "element": "数据区crc校验和",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false,
+          "auto_calc": "crc"
+        }
+      ]
+    },
+    {
+      "name": "末尾CRC模板",
+      "id": "crc_tail",
+      "protocol_value": 6,
+      "step_types": [
+        "glink_fileds_non_periodic",
+        "glink_fileds_periodic",
+        "bus1553_fileds_non_periodic",
+        "bus1553_fileds_periodic"
+      ],
+      "merge_8bit_to_16bit": true,
+      "fields": [
+        {
+          "seq": 1,
+          "element": "数据区",
+          "dtype": "UINT16_ARRAY",
+          "editable": true
+        },
+        {
+          "seq": 2,
+          "element": "数据区crc校验和",
+          "dtype": "UINT16",
+          "value": "0x0000",
+          "editable": false
+        }
+      ]
+    }
+  ],
+  "data_types": {
+    "UINT8": {
+      "size": 1,
+      "format": "hex",
+      "default": "0x00"
+    },
+    "UINT16": {
+      "size": 2,
+      "format": "hex",
+      "default": "0x0000"
+    },
+    "UINT32": {
+      "size": 4,
+      "format": "hex",
+      "default": "0x00000000"
+    },
+    "UINT8_ARRAY": {
+      "size": -1,
+      "format": "hex_array",
+      "default": ""
+    },
+    "UINT16_ARRAY": {
+      "size": -1,
+      "format": "hex_array",
+      "default": ""
+    }
+  }
+}

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+  <global_params>
+    <input_path>C:/Users/hyski/Desktop/流程配置工具/流程配置代码及上次发送给12所的dist打包/config_demo0728/build</input_path>
+    <output_path>..//..//Platform//DATA//ExDriverGLink//output</output_path>
+  </global_params>
+  <steps>
+    <step>
+      <base>
+        <step_type>0</step_type>
+        <name>新流程步</name>
+        <time>1.0</time>
+        <is_ignore>0</is_ignore>
+        <endian>1</endian>
+      </base>
+      <type>
+        <site_type>0</site_type>
+        <local_site>1</local_site>
+        <recip_site>15</recip_site>
+        <sub_address>1</sub_address>
+        <data_region>[]</data_region>
+        <protocol_type>0</protocol_type>
+      </type>
+      <expand/>
+      <protocol>
+        <时间>2</时间>
+        <消息控制字>0x0000</消息控制字>
+        <消息ID>0x0000</消息ID>
+        <帧计数>0x0000</帧计数>
+        <数据区/>
+        <数据区crc校验和>0x0000</数据区crc校验和>
+      </protocol>
+    </step>
+  </steps>
+</config>
